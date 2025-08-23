@@ -507,36 +507,6 @@ func (e *AppError) Error() string {
 }
 ```
 
-## Testing Strategy
-
-### Unit Testing
-- **Coverage Target**: 80% code coverage minimum
-- **Test Structure**: Table-driven tests for parsers and business logic
-- **Mocking**: Mock external dependencies (file system, Exim commands)
-
-### Integration Testing
-- **Database Tests**: Test with real SQLite database
-- **API Tests**: End-to-end API testing with test data
-- **Log Processing**: Test with sample Exim log files
-
-### Performance Testing
-- **Load Testing**: Test with large log files and queue sizes
-- **Memory Profiling**: Monitor memory usage during log processing
-- **Database Performance**: Query performance testing with large datasets
-
-### Test Data
-```
-testdata/
-├── logs/
-│   ├── mainlog.sample
-│   ├── rejectlog.sample
-│   └── paniclog.sample
-├── queue/
-│   └── sample_messages/
-└── api/
-    └── test_requests.json
-```
-
 ## Security Considerations
 
 ### Authentication and Authorization

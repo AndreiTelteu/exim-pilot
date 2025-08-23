@@ -52,6 +52,7 @@
     - Implement message inspection using exim queue utilities
     - Add queue message parsing and status detection
     - Create queue snapshot functionality for historical tracking
+    - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 1.1, 1.2, 1.3, 1.4_
 
   - [ ] 4.2 Implement queue operations
@@ -60,6 +61,7 @@
     - Create message deletion functionality (exim -Mrm command)
     - Add bulk operations support for multiple messages
     - Implement audit logging for all queue operations
+    - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 2.2, 2.3, 2.4, 2.5, 2.6, 2.7_
 
 - [ ] 5. REST API Implementation
@@ -70,6 +72,7 @@
     - Implement CORS middleware for frontend integration
     - Add request logging and error handling middleware
     - Create API response standardization utilities
+    - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 8.1, 8.3, 9.2_
 
   - [ ] 5.2 Implement queue management endpoints
@@ -79,6 +82,7 @@
     - Implement GET /api/v1/queue/{id} for message details
     - Create queue operation endpoints (deliver, freeze, thaw, delete)
     - Add POST /api/v1/queue/bulk for bulk operations
+    - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 1.1, 1.5, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6_
 
   - [ ] 5.3 Implement log and monitoring endpoints
@@ -87,6 +91,7 @@
     - Add POST /api/v1/logs/search for log entry search
     - Implement WebSocket endpoint for real-time log tail
     - Create GET /api/v1/dashboard for dashboard metrics
+    - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 3.1, 3.2, 3.3, 3.5, 1.4_
 
   - [ ] 5.4 Implement reporting and analytics endpoints
@@ -94,6 +99,7 @@
     - Add GET /api/v1/reports/volume for volume analysis
     - Implement GET /api/v1/reports/failures for failure breakdown
     - Create GET /api/v1/messages/{id}/trace for message tracing
+    - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 4.1, 5.1_
 
 - [ ] 6. Frontend Project Setup
@@ -105,6 +111,7 @@
     - Install and configure echarts-for-react for charts
     - Set up development proxy for API integration
     - Create basic project structure with components, hooks, services folders
+    - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 8.1, 8.2, 8.4_
 
   - [ ] 6.2 Create core frontend infrastructure
@@ -113,6 +120,7 @@
     - Set up React Context for global state management
     - Create common components (Layout, Navigation, LoadingSpinner, Pagination)
     - Add error boundary and error handling utilities
+    - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 8.1, 8.4, 8.5_
 
 - [ ] 7. Dashboard Implementation
@@ -123,6 +131,7 @@
     - Create MetricsCard component for individual statistics
     - Add queue health indicators (total, deferred, frozen, oldest message)
     - Implement real-time metrics updates via WebSocket
+    - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 1.4, 6.7_
 
   - [ ] 7.2 Implement weekly overview charts
@@ -131,6 +140,7 @@
     - Add proper data aggregation for weekly time periods
     - Ensure pending messages that get delivered are removed from pending counts
     - Add chart interactivity and tooltips
+    - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 6.7_
 
 - [ ] 8. Queue Management Interface
@@ -141,6 +151,7 @@
     - Create QueueSearch component with filtering capabilities
     - Add sortable columns for ID, sender, recipients, size, age, status, retry count
     - Implement real-time queue updates via WebSocket
+    - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 1.1, 1.2, 1.3, 8.4_
 
   - [ ] 8.2 Implement message details and operations
@@ -149,6 +160,7 @@
     - Display envelope, headers, SMTP transaction logs, and safe message content
     - Add individual message operations (deliver, freeze, thaw, delete)
     - Implement confirmation dialogs for destructive operations
+    - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 2.1, 5.1, 5.2, 5.4_
 
   - [ ] 8.3 Create bulk operations interface
@@ -156,6 +168,7 @@
     - Add bulk deliver, freeze, thaw, and delete functionality
     - Create progress indicators for bulk operations
     - Add operation result feedback and error handling
+    - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 1.5, 2.6_
 
 - [ ] 9. Log Viewer Implementation
@@ -166,6 +179,7 @@
     - Create LogSearch component for advanced log filtering
     - Add log type filtering (main, reject, panic)
     - Implement date range filtering and keyword search
+    - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 3.1, 3.2, 3.3, 3.4_
 
   - [ ] 9.2 Implement real-time log monitoring
@@ -173,6 +187,7 @@
     - Add live log streaming with filtering capabilities
     - Implement auto-scroll and pause functionality
     - Add log export functionality for selected entries
+    - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 3.5, 3.6_
 
 - [ ] 10. Reporting and Analytics Interface
@@ -183,6 +198,7 @@
     - Add success/defer/bounce rate charts and metrics
     - Create top senders and recipients analysis
     - Implement domain-based deliverability breakdown
+    - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 6.1, 6.2_
 
   - [ ] 10.2 Implement failure analysis and volume reports
@@ -190,6 +206,7 @@
     - Add VolumeReport component with traffic trends
     - Implement bounce summary and history visualization
     - Create exportable report functionality (CSV/PDF)
+    - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 6.3, 6.4, 6.5_
 
 - [ ] 11. Message Tracing and History
@@ -200,6 +217,7 @@
     - Implement per-recipient delivery status tracking
     - Add delivery attempt history with SMTP responses
     - Create retry timeline visualization
+    - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 5.1_
 
   - [ ] 11.2 Add troubleshooting and notes functionality
@@ -207,6 +225,7 @@
     - Create threaded delivery timeline view
     - Add attachment and content preview with safety measures
     - Implement correlated incident views
+    - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 5.4, 5.1, 6.6_
 
 - [ ] 12. Security and Authentication
@@ -217,6 +236,7 @@
     - Add session management with secure cookies
     - Implement login/logout functionality in frontend
     - Add authentication middleware for API endpoints
+    - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 9.1, 9.2_
 
   - [ ] 12.2 Add security measures and audit logging
@@ -224,6 +244,7 @@
     - Add audit logging for all administrative actions
     - Create immutable audit trail with user context
     - Implement file system security with minimal privileges
+    - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 9.2, 9.3, 9.4, 9.5_
 
 - [ ] 13. Performance Optimization and Testing
@@ -234,12 +255,14 @@
     - Implement efficient log processing with streaming
     - Add frontend lazy loading and virtual scrolling for large lists
     - Create data retention policies and cleanup jobs
+    - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
 
   - [ ] 13.2 Create comprehensive test suite
     - Create integration tests for API endpoints
     - Add frontend component tests with React Testing Library
     - Implement performance tests with sample data
+    - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: All requirements validation_
 
 - [ ] 14. Build System and Deployment
@@ -250,6 +273,7 @@
     - Implement Go embed package integration for static files
     - Create production build process that embeds frontend in binary
     - Add build automation with proper dependency management
+    - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 8.1, 7.6_
 
   - [ ] 14.2 Create deployment and configuration system
@@ -257,6 +281,7 @@
     - Create systemd service configuration
     - Add database migration system for deployments
     - Create installation and setup documentation
+    - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 7.1, 7.2, 7.5, 7.6_
 
 - [ ] 15. Documentation and Final Integration
@@ -267,6 +292,7 @@
     - Create API documentation with examples
     - Add inline help and tooltips in the web interface
     - Create troubleshooting guide for common issues
+    - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 8.3, 8.5_
 
   - [ ] 15.2 Final integration testing and polish
@@ -274,4 +300,5 @@
     - Test with large log files and queue sizes
     - Verify all audit logging and security measures
     - Polish UI/UX based on testing feedback
+    - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: All requirements final validation_
