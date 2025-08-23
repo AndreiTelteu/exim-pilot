@@ -7,6 +7,7 @@ class WebSocketService {
   private maxReconnectAttempts = 5;
   private reconnectInterval = 1000;
   private eventHandlers: Map<string, WebSocketEventHandler[]> = new Map();
+  private subscriptions: Map<string, WebSocketEventHandler[]> = new Map();
 
   constructor(url: string = 'ws://localhost:8080/ws') {
     this.url = url;
@@ -48,9 +49,17 @@ class WebSocketService {
   }
 
   private handleMessage(message: any) {
-    const { type, data } = message;
-    const handlers = this.eventHandlers.get(type) || [];
-    handlers.forEach(handler => handler(data));
+    const { type, data, endpoint } = message;
+    
+    // Handle subscription-based messages
+    if (endpoint) {
+      const handlers = this.subscriptions.get(endpoint) || [];
+      handlers.forEach(handler => handler(message));
+    } else {
+      // Handle event-based messages
+      const handlers = this.eventHandlers.get(type) || [];
+      handlers.forEach(handler => handler(data));
+    }
   }
 
   private handleReconnect() {
@@ -102,6 +111,48 @@ class WebSocketService {
 
   isConnected(): boolean {
     return this.ws?.readyState === WebSocket.OPEN;
+  }
+
+  // Subscription-based methods for endpoints like log tailing
+  subscribe(endpoint: string, handler: WebSocketEventHandler) {
+    if (!this.subscriptions.has(endpoint)) {
+      this.subscriptions.set(endpoint, []);
+    }
+    this.subscriptions.get(endpoint)!.push(handler);
+
+    // Send subscription message to server
+    this.send({
+      type: 'subscribe',
+      endpoint: endpoint
+    });
+  }
+
+  unsubscribe(endpoint: string, handler?: WebSocketEventHandler) {
+    if (handler) {
+      const handlers = this.subscriptions.get(endpoint);
+      if (handlers) {
+        const index = handlers.indexOf(handler);
+        if (index > -1) {
+          handlers.splice(index, 1);
+        }
+        
+        // If no more handlers, remove the subscription entirely
+        if (handlers.length === 0) {
+          this.subscriptions.delete(endpoint);
+          this.send({
+            type: 'unsubscribe',
+            endpoint: endpoint
+          });
+        }
+      }
+    } else {
+      // Remove all handlers for this endpoint
+      this.subscriptions.delete(endpoint);
+      this.send({
+        type: 'unsubscribe',
+        endpoint: endpoint
+      });
+    }
   }
 }
 

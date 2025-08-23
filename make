@@ -18,14 +18,14 @@ elif [ $1 == "dev" ]; then
     air
 elif [ $1 == "build-dev" ]; then
     mkdir -p tmp
-    go build -o tmp/main cmd/exim-pilot/main.go
+    go build -o tmp/main.exe cmd/exim-pilot/main.go
 elif [ $1 == "build" ]; then
     echo "Building frontend..."
     mkdir -p web/dist
     echo "<!-- Placeholder -->" > web/dist/index.html
     echo "Building production binary..."
     mkdir -p bin
-    go build -tags embed -o bin/exim-pilot cmd/exim-pilot/main.go
+    go build -tags embed -o bin/exim-pilot.exe cmd/exim-pilot/main.go
 elif [ $1 == "test" ]; then
     go test ./...
 elif [ $1 == "clean" ]; then

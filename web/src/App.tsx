@@ -7,6 +7,9 @@ import { webSocketService } from './services/websocket';
 import Dashboard from './components/Dashboard/Dashboard';
 import Queue from './components/Queue/Queue';
 import BulkActionsTest from './components/Queue/BulkActionsTest';
+import { Logs } from './components/Logs';
+import LogViewerTest from './components/Logs/LogViewerTest';
+import LogsTestPage from './components/Logs/LogsTestPage';
 
 function AppContent() {
   useEffect(() => {
@@ -25,6 +28,9 @@ function AppContent() {
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/queue" element={<Queue />} />
+        <Route path="/logs" element={<Logs />} />
+        <Route path="/logs-test" element={<LogViewerTest />} />
+        <Route path="/logs-full-test" element={<LogsTestPage />} />
         <Route path="/bulk-test" element={<BulkActionsTest />} />
       </Routes>
     </Layout>
