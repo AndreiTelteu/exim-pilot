@@ -23,13 +23,34 @@ class APIService {
 
     try {
       const response = await fetch(url, config);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || `HTTP error! status: ${response.status}`);
+      
+      // Check if response has content before trying to parse JSON
+      const contentType = response.headers.get('content-type');
+      const hasJsonContent = contentType && contentType.includes('application/json');
+      
+      let data;
+      if (hasJsonContent) {
+        const text = await response.text();
+        if (text.trim()) {
+          try {
+            data = JSON.parse(text);
+          } catch (parseError) {
+            console.error('Failed to parse JSON response:', text);
+            throw new Error('Invalid JSON response from server');
+          }
+        } else {
+          data = null;
+        }
+      } else {
+        data = null;
       }
 
-      return data;
+      if (!response.ok) {
+        const errorMessage = data?.error || `HTTP error! status: ${response.status}`;
+        throw new Error(errorMessage);
+      }
+
+      return data || { success: true, data: null };
     } catch (error) {
       console.error('API request failed:', error);
       throw error;
