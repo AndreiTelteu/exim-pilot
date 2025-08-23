@@ -10,6 +10,7 @@ import BulkActionsTest from './components/Queue/BulkActionsTest';
 import { Logs } from './components/Logs';
 import LogViewerTest from './components/Logs/LogViewerTest';
 import LogsTestPage from './components/Logs/LogsTestPage';
+import { Reports } from './components/Reports';
 
 function AppContent() {
   useEffect(() => {
@@ -29,6 +30,7 @@ function AppContent() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/queue" element={<Queue />} />
         <Route path="/logs" element={<Logs />} />
+        <Route path="/reports" element={<Reports />} />
         <Route path="/logs-test" element={<LogViewerTest />} />
         <Route path="/logs-full-test" element={<LogsTestPage />} />
         <Route path="/bulk-test" element={<BulkActionsTest />} />
