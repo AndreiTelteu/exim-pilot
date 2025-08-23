@@ -1,10 +1,12 @@
 
-
 import { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { ErrorBoundary, Layout } from './components/Common';
 import { webSocketService } from './services/websocket';
 import Dashboard from './components/Dashboard/Dashboard';
+import Queue from './components/Queue/Queue';
+import BulkActionsTest from './components/Queue/BulkActionsTest';
 
 function AppContent() {
   useEffect(() => {
@@ -20,7 +22,11 @@ function AppContent() {
 
   return (
     <Layout>
-      <Dashboard />
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/queue" element={<Queue />} />
+        <Route path="/bulk-test" element={<BulkActionsTest />} />
+      </Routes>
     </Layout>
   );
 }
@@ -29,7 +35,9 @@ function App() {
   return (
     <ErrorBoundary>
       <AppProvider>
-        <AppContent />
+        <Router>
+          <AppContent />
+        </Router>
       </AppProvider>
     </ErrorBoundary>
   );

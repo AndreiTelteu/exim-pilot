@@ -1,16 +1,24 @@
-import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
 
 export default function Navigation() {
   const { state } = useApp();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const location = useLocation();
 
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard', href: '#dashboard' },
-    { id: 'queue', label: 'Queue Management', href: '#queue' },
-    { id: 'logs', label: 'Log Monitoring', href: '#logs' },
-    { id: 'reports', label: 'Reports', href: '#reports' },
+    { id: 'dashboard', label: 'Dashboard', path: '/' },
+    { id: 'queue', label: 'Queue Management', path: '/queue' },
+    { id: 'logs', label: 'Log Monitoring', path: '/logs' },
+    { id: 'reports', label: 'Reports', path: '/reports' },
   ];
+
+  const isActive = (path: string) => {
+    if (path === '/') {
+      return location.pathname === '/';
+    }
+    return location.pathname.startsWith(path);
+  };
 
   return (
     <nav className="bg-white shadow-sm border-b">
@@ -27,21 +35,17 @@ export default function Navigation() {
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-4">
               {navItems.map((item) => (
-                <a
+                <Link
                   key={item.id}
-                  href={item.href}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setActiveTab(item.id);
-                  }}
+                  to={item.path}
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    activeTab === item.id
+                    isActive(item.path)
                       ? 'bg-blue-100 text-blue-700'
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                 >
                   {item.label}
-                </a>
+                </Link>
               ))}
             </div>
           </div>
@@ -81,21 +85,17 @@ export default function Navigation() {
         <div className="md:hidden">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             {navItems.map((item) => (
-              <a
+              <Link
                 key={item.id}
-                href={item.href}
-                onClick={(e) => {
-                  e.preventDefault();
-                  setActiveTab(item.id);
-                }}
+                to={item.path}
                 className={`block px-3 py-2 rounded-md text-base font-medium ${
-                  activeTab === item.id
+                  isActive(item.path)
                     ? 'bg-blue-100 text-blue-700'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                 }`}
               >
                 {item.label}
-              </a>
+              </Link>
             ))}
           </div>
         </div>
