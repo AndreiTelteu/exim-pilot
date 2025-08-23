@@ -41,6 +41,8 @@ config.yml
 *.swp
 *.swo
 
+node_modules
+
 # OS files
 .DS_Store
 Thumbs.db
