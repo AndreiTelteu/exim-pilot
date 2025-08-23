@@ -26,27 +26,27 @@ exim-pilot/
 
 1. Install dependencies:
    ```bash
-   make install
+   ./make install
    ```
 
 2. Run in development mode with hot reload:
    ```bash
-   make dev
+   ./make dev
    ```
 
 3. Build for production:
    ```bash
-   make build
+   ./make build
    ```
 
-### Available Make Commands
+### Available Build Commands
 
-- `make install` - Install Go dependencies
-- `make dev` - Start development server with hot reload
-- `make build-dev` - Build development binary
-- `make build` - Build production binary with embedded frontend
-- `make test` - Run tests
-- `make clean` - Clean build artifacts
+- `./make install` - Install Go dependencies
+- `./make dev` - Start development server with hot reload
+- `./make build-dev` - Build development binary
+- `./make build` - Build production binary with embedded frontend
+- `./make test` - Run tests
+- `./make clean` - Clean build artifacts
 
 ## Features (To be implemented)
 
