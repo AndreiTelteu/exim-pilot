@@ -108,4 +108,37 @@ CREATE INDEX IF NOT EXISTS idx_audit_log_message_id ON audit_log(message_id);
 CREATE INDEX IF NOT EXISTS idx_audit_log_user_id ON audit_log(user_id);
 
 CREATE INDEX IF NOT EXISTS idx_queue_snapshots_timestamp ON queue_snapshots(timestamp);
+
+-- Message notes table for operator notes
+CREATE TABLE IF NOT EXISTS message_notes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    message_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    note TEXT NOT NULL,
+    is_public BOOLEAN NOT NULL DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
+);
+
+-- Message tags table for categorization
+CREATE TABLE IF NOT EXISTS message_tags (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    message_id TEXT NOT NULL,
+    tag TEXT NOT NULL,
+    color TEXT, -- hex color code
+    user_id TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,
+    UNIQUE(message_id, tag) -- prevent duplicate tags per message
+);
+
+-- Indexes for notes and tags
+CREATE INDEX IF NOT EXISTS idx_message_notes_message_id ON message_notes(message_id);
+CREATE INDEX IF NOT EXISTS idx_message_notes_user_id ON message_notes(user_id);
+CREATE INDEX IF NOT EXISTS idx_message_notes_created_at ON message_notes(created_at);
+
+CREATE INDEX IF NOT EXISTS idx_message_tags_message_id ON message_tags(message_id);
+CREATE INDEX IF NOT EXISTS idx_message_tags_tag ON message_tags(tag);
+CREATE INDEX IF NOT EXISTS idx_message_tags_user_id ON message_tags(user_id);
 `

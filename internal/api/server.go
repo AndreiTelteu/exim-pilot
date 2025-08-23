@@ -134,13 +134,46 @@ func (s *Server) setupRoutes() {
 		api.HandleFunc("/reports/volume", reportsHandlers.handleVolumeReport).Methods("GET")
 		api.HandleFunc("/reports/failures", reportsHandlers.handleFailureReport).Methods("GET")
 
-		// Message tracing
+		// Message tracing (legacy endpoint)
 		api.HandleFunc("/messages/{id}/trace", reportsHandlers.handleMessageTrace).Methods("GET")
 
 		// Additional reporting endpoints
 		api.HandleFunc("/reports/top-senders", reportsHandlers.handleTopSenders).Methods("GET")
 		api.HandleFunc("/reports/top-recipients", reportsHandlers.handleTopRecipients).Methods("GET")
 		api.HandleFunc("/reports/domains", reportsHandlers.handleDomainAnalysis).Methods("GET")
+	}
+
+	// Enhanced Message Tracing routes (Task 11.1)
+	if s.repository != nil {
+		messageTraceHandlers := NewMessageTraceHandlers(s.repository, s.queueService, s.logService)
+
+		// Enhanced message delivery tracing (Task 11.1)
+		api.HandleFunc("/messages/{id}/delivery-trace", messageTraceHandlers.handleMessageDeliveryTrace).Methods("GET")
+		api.HandleFunc("/messages/{id}/recipients/{recipient}/history", messageTraceHandlers.handleRecipientDeliveryHistory).Methods("GET")
+		api.HandleFunc("/messages/{id}/timeline", messageTraceHandlers.handleDeliveryTimeline).Methods("GET")
+		api.HandleFunc("/messages/{id}/retry-schedule", messageTraceHandlers.handleRetrySchedule).Methods("GET")
+		api.HandleFunc("/messages/{id}/delivery-stats", messageTraceHandlers.handleMessageDeliveryStats).Methods("GET")
+
+		// Delivery attempt details
+		api.HandleFunc("/delivery-attempts/{id}", messageTraceHandlers.handleDeliveryAttemptDetails).Methods("GET")
+
+		// Troubleshooting and notes functionality (Task 11.2)
+		api.HandleFunc("/messages/{id}/threaded-timeline", messageTraceHandlers.handleThreadedTimeline).Methods("GET")
+		api.HandleFunc("/messages/{id}/content", messageTraceHandlers.handleMessageContent).Methods("GET")
+
+		// Message notes
+		api.HandleFunc("/messages/{id}/notes", messageTraceHandlers.handleMessageNotes).Methods("GET")
+		api.HandleFunc("/messages/{id}/notes", messageTraceHandlers.handleCreateMessageNote).Methods("POST")
+		api.HandleFunc("/messages/{id}/notes/{noteId}", messageTraceHandlers.handleUpdateMessageNote).Methods("PUT")
+		api.HandleFunc("/messages/{id}/notes/{noteId}", messageTraceHandlers.handleDeleteMessageNote).Methods("DELETE")
+
+		// Message tags
+		api.HandleFunc("/messages/{id}/tags", messageTraceHandlers.handleMessageTags).Methods("GET")
+		api.HandleFunc("/messages/{id}/tags", messageTraceHandlers.handleCreateMessageTag).Methods("POST")
+		api.HandleFunc("/messages/{id}/tags/{tagId}", messageTraceHandlers.handleDeleteMessageTag).Methods("DELETE")
+
+		// Popular tags
+		api.HandleFunc("/tags/popular", messageTraceHandlers.handlePopularTags).Methods("GET")
 	}
 }
 

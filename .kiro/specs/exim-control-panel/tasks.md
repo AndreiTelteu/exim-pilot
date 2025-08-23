@@ -227,9 +227,9 @@
     - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 6.3, 6.4, 6.5_
 
-- [ ] 11. Message Tracing and History
+- [x] 11. Message Tracing and History
 
-  - [ ] 11.1 Implement message delivery tracing
+  - [x] 11.1 Implement message delivery tracing
 
     - Create message trace functionality with delivery timeline
     - Implement per-recipient delivery status tracking
@@ -239,7 +239,8 @@
     - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 5.1_
 
-  - [ ] 11.2 Add troubleshooting and notes functionality
+  - [x] 11.2 Add troubleshooting and notes functionality
+
     - Implement operator notes and tags for messages
     - Create threaded delivery timeline view
     - Add attachment and content preview with safety measures
