@@ -44,9 +44,9 @@
     - Add log data retention policies and cleanup
     - _Requirements: 3.4, 3.6, 10.5_
 
-- [ ] 4. Queue Management System
+- [x] 4. Queue Management System
 
-  - [ ] 4.1 Implement Exim queue interface
+  - [x] 4.1 Implement Exim queue interface
 
     - Create queue listing functionality using exim -bp command
     - Implement message inspection using exim queue utilities
@@ -55,7 +55,8 @@
     - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 1.1, 1.2, 1.3, 1.4_
 
-  - [ ] 4.2 Implement queue operations
+  - [x] 4.2 Implement queue operations
+
     - Add deliver now functionality (exim -M command)
     - Implement freeze/thaw operations (exim -Mf/-Mt commands)
     - Create message deletion functionality (exim -Mrm command)

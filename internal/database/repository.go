@@ -32,6 +32,12 @@ func (r *Repository) CreateLogEntry(ctx context.Context, entry *LogEntry) error 
 	return r.logEntryRepo.Create(entry)
 }
 
+// CreateQueueSnapshot creates a queue snapshot
+func (r *Repository) CreateQueueSnapshot(snapshot *QueueSnapshot) error {
+	repo := NewQueueSnapshotRepository(r.db)
+	return repo.Create(snapshot)
+}
+
 // MessageRepository handles message-related database operations
 type MessageRepository struct {
 	*Repository
