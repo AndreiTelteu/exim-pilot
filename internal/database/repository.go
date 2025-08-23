@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -9,12 +10,26 @@ import (
 
 // Repository provides common database operations
 type Repository struct {
-	db *DB
+	db           *DB
+	logEntryRepo *LogEntryRepository
 }
 
 // NewRepository creates a new repository instance
 func NewRepository(db *DB) *Repository {
-	return &Repository{db: db}
+	return &Repository{
+		db:           db,
+		logEntryRepo: NewLogEntryRepository(db),
+	}
+}
+
+// GetDB returns the database connection
+func (r *Repository) GetDB() *DB {
+	return r.db
+}
+
+// CreateLogEntry creates a log entry (context-aware wrapper)
+func (r *Repository) CreateLogEntry(ctx context.Context, entry *LogEntry) error {
+	return r.logEntryRepo.Create(entry)
 }
 
 // MessageRepository handles message-related database operations
