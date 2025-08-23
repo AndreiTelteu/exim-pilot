@@ -1,0 +1,111 @@
+package database
+
+// Schema contains all the SQL statements for creating tables and indexes
+const Schema = `
+-- Messages table for tracking all messages
+CREATE TABLE IF NOT EXISTS messages (
+    id TEXT PRIMARY KEY,
+    timestamp DATETIME NOT NULL,
+    sender TEXT NOT NULL,
+    size INTEGER,
+    status TEXT NOT NULL CHECK (status IN ('received', 'queued', 'delivered', 'deferred', 'bounced', 'frozen')),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Recipients table for message recipients
+CREATE TABLE IF NOT EXISTS recipients (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    message_id TEXT NOT NULL,
+    recipient TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('delivered', 'deferred', 'bounced', 'pending')),
+    delivered_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
+);
+
+-- Delivery attempts table
+CREATE TABLE IF NOT EXISTS delivery_attempts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    message_id TEXT NOT NULL,
+    recipient TEXT NOT NULL,
+    timestamp DATETIME NOT NULL,
+    host TEXT,
+    ip_address TEXT,
+    status TEXT NOT NULL CHECK (status IN ('success', 'defer', 'bounce', 'timeout')),
+    smtp_code TEXT,
+    error_message TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
+);
+
+-- Log entries table for searchable log history
+CREATE TABLE IF NOT EXISTS log_entries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp DATETIME NOT NULL,
+    message_id TEXT,
+    log_type TEXT NOT NULL CHECK (log_type IN ('main', 'reject', 'panic')),
+    event TEXT NOT NULL,
+    host TEXT,
+    sender TEXT,
+    recipients TEXT, -- JSON array
+    size INTEGER,
+    status TEXT,
+    error_code TEXT,
+    error_text TEXT,
+    raw_line TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Audit log for administrative actions
+CREATE TABLE IF NOT EXISTS audit_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    action TEXT NOT NULL,
+    message_id TEXT,
+    user_id TEXT,
+    details TEXT, -- JSON
+    ip_address TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Queue snapshots for historical tracking
+CREATE TABLE IF NOT EXISTS queue_snapshots (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    total_messages INTEGER NOT NULL DEFAULT 0,
+    deferred_messages INTEGER NOT NULL DEFAULT 0,
+    frozen_messages INTEGER NOT NULL DEFAULT 0,
+    oldest_message_age INTEGER, -- seconds
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Performance indexes
+CREATE INDEX IF NOT EXISTS idx_messages_timestamp ON messages(timestamp);
+CREATE INDEX IF NOT EXISTS idx_messages_status ON messages(status);
+CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender);
+CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at);
+
+CREATE INDEX IF NOT EXISTS idx_recipients_message_id ON recipients(message_id);
+CREATE INDEX IF NOT EXISTS idx_recipients_status ON recipients(status);
+CREATE INDEX IF NOT EXISTS idx_recipients_recipient ON recipients(recipient);
+
+CREATE INDEX IF NOT EXISTS idx_delivery_attempts_message_id ON delivery_attempts(message_id);
+CREATE INDEX IF NOT EXISTS idx_delivery_attempts_timestamp ON delivery_attempts(timestamp);
+CREATE INDEX IF NOT EXISTS idx_delivery_attempts_recipient ON delivery_attempts(recipient);
+CREATE INDEX IF NOT EXISTS idx_delivery_attempts_status ON delivery_attempts(status);
+
+CREATE INDEX IF NOT EXISTS idx_log_entries_timestamp ON log_entries(timestamp);
+CREATE INDEX IF NOT EXISTS idx_log_entries_message_id ON log_entries(message_id);
+CREATE INDEX IF NOT EXISTS idx_log_entries_event ON log_entries(event);
+CREATE INDEX IF NOT EXISTS idx_log_entries_log_type ON log_entries(log_type);
+CREATE INDEX IF NOT EXISTS idx_log_entries_sender ON log_entries(sender);
+
+CREATE INDEX IF NOT EXISTS idx_audit_log_timestamp ON audit_log(timestamp);
+CREATE INDEX IF NOT EXISTS idx_audit_log_action ON audit_log(action);
+CREATE INDEX IF NOT EXISTS idx_audit_log_message_id ON audit_log(message_id);
+CREATE INDEX IF NOT EXISTS idx_audit_log_user_id ON audit_log(user_id);
+
+CREATE INDEX IF NOT EXISTS idx_queue_snapshots_timestamp ON queue_snapshots(timestamp);
+`
