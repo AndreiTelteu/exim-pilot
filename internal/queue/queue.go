@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/exim-pilot/internal/database"
+	"github.com/andreitelteu/exim-pilot/internal/database"
 )
 
 // QueueMessage represents a message in the Exim queue

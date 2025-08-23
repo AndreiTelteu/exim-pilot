@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os/exec"
 
-	"github.com/exim-pilot/internal/database"
+	"github.com/andreitelteu/exim-pilot/internal/database"
 )
 
 // OperationResult represents the result of a queue operation

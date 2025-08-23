@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/exim-pilot/internal/database"
+	"github.com/andreitelteu/exim-pilot/internal/database"
 )
 
 // Service provides queue management functionality

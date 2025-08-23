@@ -326,7 +326,9 @@ type LogEntryRepository struct {
 
 // NewLogEntryRepository creates a new log entry repository
 func NewLogEntryRepository(db *DB) *LogEntryRepository {
-	return &LogEntryRepository{Repository: NewRepository(db)}
+	return &LogEntryRepository{
+		Repository: &Repository{db: db},
+	}
 }
 
 // Create inserts a new log entry

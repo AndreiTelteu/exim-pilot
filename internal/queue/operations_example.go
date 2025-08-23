@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/exim-pilot/internal/database"
+	"github.com/andreitelteu/exim-pilot/internal/database"
 )
 
 // ExampleQueueOperations demonstrates how to use the queue operations
@@ -15,7 +15,9 @@ func ExampleQueueOperations() {
 	// In a real application, this would be called from API handlers
 
 	// Initialize database connection (example)
-	db, err := database.NewConnection("exim-pilot.db")
+	dbConfig := database.DefaultConfig()
+	dbConfig.Path = "exim-pilot.db"
+	db, err := database.Connect(dbConfig)
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
