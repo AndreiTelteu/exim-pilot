@@ -113,6 +113,7 @@
     - Install and configure echarts-for-react for charts
     - Set up development proxy for API integration
     - Create basic project structure with components, hooks, services folders
+    - YOU CAN USER playwright MCP TO VERIFY YOUR RESULTS
     - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 8.1, 8.2, 8.4_
 
@@ -122,6 +123,7 @@
     - Set up React Context for global state management
     - Create common components (Layout, Navigation, LoadingSpinner, Pagination)
     - Add error boundary and error handling utilities
+    - YOU CAN USER playwright MCP TO VERIFY YOUR RESULTS
     - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 8.1, 8.4, 8.5_
 
@@ -133,6 +135,7 @@
     - Create MetricsCard component for individual statistics
     - Add queue health indicators (total, deferred, frozen, oldest message)
     - Implement real-time metrics updates via WebSocket
+    - YOU CAN USER playwright MCP TO VERIFY YOUR RESULTS
     - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 1.4, 6.7_
 
@@ -142,6 +145,7 @@
     - Add proper data aggregation for weekly time periods
     - Ensure pending messages that get delivered are removed from pending counts
     - Add chart interactivity and tooltips
+    - YOU CAN USER playwright MCP TO VERIFY YOUR RESULTS
     - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 6.7_
 
@@ -153,6 +157,7 @@
     - Create QueueSearch component with filtering capabilities
     - Add sortable columns for ID, sender, recipients, size, age, status, retry count
     - Implement real-time queue updates via WebSocket
+    - YOU CAN USER playwright MCP TO VERIFY YOUR RESULTS
     - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 1.1, 1.2, 1.3, 8.4_
 
@@ -162,6 +167,7 @@
     - Display envelope, headers, SMTP transaction logs, and safe message content
     - Add individual message operations (deliver, freeze, thaw, delete)
     - Implement confirmation dialogs for destructive operations
+    - YOU CAN USER playwright MCP TO VERIFY YOUR RESULTS
     - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 2.1, 5.1, 5.2, 5.4_
 
@@ -170,6 +176,7 @@
     - Add bulk deliver, freeze, thaw, and delete functionality
     - Create progress indicators for bulk operations
     - Add operation result feedback and error handling
+    - YOU CAN USER playwright MCP TO VERIFY YOUR RESULTS
     - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 1.5, 2.6_
 
@@ -181,6 +188,7 @@
     - Create LogSearch component for advanced log filtering
     - Add log type filtering (main, reject, panic)
     - Implement date range filtering and keyword search
+    - YOU CAN USER playwright MCP TO VERIFY YOUR RESULTS
     - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 3.1, 3.2, 3.3, 3.4_
 
@@ -189,6 +197,7 @@
     - Add live log streaming with filtering capabilities
     - Implement auto-scroll and pause functionality
     - Add log export functionality for selected entries
+    - YOU CAN USER playwright MCP TO VERIFY YOUR RESULTS
     - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 3.5, 3.6_
 
@@ -200,6 +209,7 @@
     - Add success/defer/bounce rate charts and metrics
     - Create top senders and recipients analysis
     - Implement domain-based deliverability breakdown
+    - YOU CAN USER playwright MCP TO VERIFY YOUR RESULTS
     - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 6.1, 6.2_
 
@@ -208,6 +218,7 @@
     - Add VolumeReport component with traffic trends
     - Implement bounce summary and history visualization
     - Create exportable report functionality (CSV/PDF)
+    - YOU CAN USER playwright MCP TO VERIFY YOUR RESULTS
     - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 6.3, 6.4, 6.5_
 
@@ -219,6 +230,7 @@
     - Implement per-recipient delivery status tracking
     - Add delivery attempt history with SMTP responses
     - Create retry timeline visualization
+    - YOU CAN USER playwright MCP TO VERIFY YOUR RESULTS
     - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 5.1_
 
@@ -227,6 +239,7 @@
     - Create threaded delivery timeline view
     - Add attachment and content preview with safety measures
     - Implement correlated incident views
+    - YOU CAN USER playwright MCP TO VERIFY YOUR RESULTS
     - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 5.4, 5.1, 6.6_
 
@@ -238,6 +251,7 @@
     - Add session management with secure cookies
     - Implement login/logout functionality in frontend
     - Add authentication middleware for API endpoints
+    - YOU CAN USER playwright MCP TO VERIFY YOUR RESULTS
     - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 9.1, 9.2_
 
@@ -246,6 +260,7 @@
     - Add audit logging for all administrative actions
     - Create immutable audit trail with user context
     - Implement file system security with minimal privileges
+    - YOU CAN USER playwright MCP TO VERIFY YOUR RESULTS
     - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 9.2, 9.3, 9.4, 9.5_
 
@@ -257,6 +272,7 @@
     - Implement efficient log processing with streaming
     - Add frontend lazy loading and virtual scrolling for large lists
     - Create data retention policies and cleanup jobs
+    - YOU CAN USER playwright MCP TO VERIFY YOUR RESULTS
     - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
 
@@ -264,6 +280,7 @@
     - Create integration tests for API endpoints
     - Add frontend component tests with React Testing Library
     - Implement performance tests with sample data
+    - YOU CAN USER playwright MCP TO VERIFY YOUR RESULTS
     - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: All requirements validation_
 
@@ -275,6 +292,7 @@
     - Implement Go embed package integration for static files
     - Create production build process that embeds frontend in binary
     - Add build automation with proper dependency management
+    - YOU CAN USER playwright MCP TO VERIFY YOUR RESULTS
     - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 8.1, 7.6_
 
@@ -283,6 +301,7 @@
     - Create systemd service configuration
     - Add database migration system for deployments
     - Create installation and setup documentation
+    - YOU CAN USER playwright MCP TO VERIFY YOUR RESULTS
     - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 7.1, 7.2, 7.5, 7.6_
 
@@ -294,6 +313,7 @@
     - Create API documentation with examples
     - Add inline help and tooltips in the web interface
     - Create troubleshooting guide for common issues
+    - YOU CAN USER playwright MCP TO VERIFY YOUR RESULTS
     - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 8.3, 8.5_
 
@@ -302,5 +322,6 @@
     - Test with large log files and queue sizes
     - Verify all audit logging and security measures
     - Polish UI/UX based on testing feedback
+    - YOU CAN USER playwright MCP TO VERIFY YOUR RESULTS
     - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: All requirements final validation_
