@@ -1,0 +1,58 @@
+server:
+    port: 8080
+    host: 0.0.0.0
+    read_timeout: 15
+    write_timeout: 15
+    idle_timeout: 60
+    allowed_origins:
+        - '*'
+    log_requests: true
+    tls_enabled: false
+    tls_cert_file: ""
+    tls_key_file: ""
+database:
+    path: data/test-exim-pilot.db
+    max_open_conns: 25
+    max_idle_conns: 5
+    conn_max_lifetime: 5
+    backup_enabled: true
+    backup_interval: 24
+    backup_path: backups
+exim:
+    log_paths:
+        - data/test-mainlog
+        - data/test-rejectlog
+        - data/test-paniclog
+    spool_dir: data/test-spool
+    binary_path: bin/exim-pilot.exe
+    config_file: config/test-config.yaml
+    queue_run_user: test-user
+    log_rotation_dir: data
+logging:
+    level: info
+    file: /opt/exim-pilot/logs/exim-pilot.log
+    max_size: 100
+    max_backups: 5
+    max_age: 30
+    compress: true
+retention:
+    log_entries_days: 90
+    audit_log_days: 365
+    queue_snapshots_days: 30
+    delivery_attempt_days: 180
+    cleanup_interval: 24
+security:
+    session_timeout: 60
+    max_login_attempts: 5
+    login_lockout_time: 15
+    csrf_protection: true
+    secure_cookies: true
+    content_redaction: true
+    audit_all_actions: true
+    trusted_proxies: []
+auth:
+    default_username: admin
+    default_password: admin123
+    password_min_length: 8
+    require_strong_password: true
+    session_secret: ""

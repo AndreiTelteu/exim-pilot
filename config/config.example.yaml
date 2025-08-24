@@ -1,0 +1,77 @@
+# Exim Control Panel Configuration Example
+# Copy this file to config.yaml and customize for your environment
+
+server:
+  port: 8080                    # HTTP port to listen on
+  host: "0.0.0.0"              # Host to bind to (0.0.0.0 for all interfaces)
+  read_timeout: 15             # Request read timeout (seconds)
+  write_timeout: 15            # Response write timeout (seconds)
+  idle_timeout: 60             # Connection idle timeout (seconds)
+  allowed_origins: ["*"]       # CORS allowed origins (use specific domains in production)
+  log_requests: true           # Log HTTP requests
+  tls_enabled: false           # Enable HTTPS
+  tls_cert_file: ""           # Path to TLS certificate file
+  tls_key_file: ""            # Path to TLS private key file
+
+database:
+  path: "data/exim-pilot.db"   # SQLite database file path
+  max_open_conns: 25           # Maximum open database connections
+  max_idle_conns: 5            # Maximum idle database connections
+  conn_max_lifetime: 5         # Connection lifetime (minutes)
+  backup_enabled: true         # Enable automatic database backups
+  backup_interval: 24          # Backup interval (hours)
+  backup_path: "backups"       # Backup directory path
+
+exim:
+  log_paths:                   # Exim log file paths to monitor
+    - "/var/log/exim4/mainlog"
+    - "/var/log/exim4/rejectlog"
+    - "/var/log/exim4/paniclog"
+  spool_dir: "/var/spool/exim4" # Exim spool directory
+  binary_path: "/usr/sbin/exim4" # Path to Exim binary
+  config_file: "/etc/exim4/exim4.conf" # Exim configuration file
+  queue_run_user: "Debian-exim" # User that runs Exim queue operations
+  log_rotation_dir: "/var/log/exim4" # Directory for rotated logs
+
+logging:
+  level: "info"                # Log level (debug, info, warn, error, fatal)
+  file: "logs/exim-pilot.log"  # Log file path (empty for stdout only)
+  max_size: 100                # Maximum log file size (MB)
+  max_backups: 5               # Number of log backup files to keep
+  max_age: 30                  # Maximum age of log files (days)
+  compress: true               # Compress rotated log files
+
+retention:
+  log_entries_days: 90         # Keep log entries for this many days
+  audit_log_days: 365          # Keep audit log entries for this many days
+  queue_snapshots_days: 30     # Keep queue snapshots for this many days
+  delivery_attempt_days: 180   # Keep delivery attempts for this many days
+  cleanup_interval: 24         # Run cleanup every N hours
+
+security:
+  session_timeout: 60          # Session timeout (minutes)
+  max_login_attempts: 5        # Maximum failed login attempts per IP
+  login_lockout_time: 15       # Lockout duration after max attempts (minutes)
+  csrf_protection: true        # Enable CSRF protection
+  secure_cookies: true         # Use secure cookies (requires HTTPS)
+  content_redaction: true      # Redact sensitive content in logs/UI
+  audit_all_actions: true      # Audit all administrative actions
+  trusted_proxies: []          # List of trusted proxy IP addresses/ranges
+
+auth:
+  default_username: "admin"    # Default admin username
+  default_password: "admin123" # Default admin password (CHANGE THIS!)
+  password_min_length: 8       # Minimum password length
+  require_strong_password: true # Require strong passwords
+  session_secret: ""           # Session secret (auto-generated if empty)
+
+# Environment variable overrides:
+# EXIM_PILOT_PORT - Override server port
+# EXIM_PILOT_HOST - Override server host
+# EXIM_PILOT_DB_PATH - Override database path
+# EXIM_PILOT_LOG_LEVEL - Override log level
+# EXIM_PILOT_ADMIN_PASSWORD - Override admin password
+# EXIM_PILOT_SESSION_SECRET - Override session secret
+# EXIM_PILOT_TLS_ENABLED - Enable/disable TLS
+# EXIM_PILOT_TLS_CERT - TLS certificate file path
+# EXIM_PILOT_TLS_KEY - TLS key file path

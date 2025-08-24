@@ -52,6 +52,8 @@ if [ $# -eq 0 ]; then
     echo "  ./make build-dev   - Build development binary"
     echo "  ./make build-frontend - Build frontend only"
     echo "  ./make build       - Build production binary with embedded frontend"
+    echo "  ./make build-config - Build configuration tool"
+    echo "  ./make build-all   - Build all binaries"
     echo "  ./make start       - Start production binary"
     echo "  ./make verify      - Verify embedded assets in production binary"
     echo "  ./make test        - Run tests"
@@ -64,6 +66,31 @@ elif [ $1 == "dev" ]; then
 elif [ $1 == "build-dev" ]; then
     mkdir -p tmp
     go build -o tmp/main.exe cmd/exim-pilot/main.go
+elif [ $1 == "build-config" ]; then
+    echo "Building configuration tool..."
+    mkdir -p bin
+    install_go_deps
+    go build -ldflags="-s -w" -o bin/exim-pilot-config.exe ./cmd/exim-pilot-config
+    echo "Configuration tool built: bin/exim-pilot-config.exe"
+elif [ $1 == "build-all" ]; then
+    echo "=== Building All Binaries ==="
+    
+    # Build frontend first
+    build_frontend "production"
+    
+    # Build main application
+    echo "Building main application..."
+    mkdir -p bin
+    install_go_deps
+    go build -tags embed -ldflags="-s -w" -o bin/exim-pilot.exe ./cmd/exim-pilot
+    
+    # Build configuration tool
+    echo "Building configuration tool..."
+    go build -ldflags="-s -w" -o bin/exim-pilot-config.exe ./cmd/exim-pilot-config
+    
+    echo "=== All Builds Complete ==="
+    echo "Main application: bin/exim-pilot.exe ($(du -sh bin/exim-pilot.exe | cut -f1))"
+    echo "Configuration tool: bin/exim-pilot-config.exe ($(du -sh bin/exim-pilot-config.exe | cut -f1))"
 elif [ $1 == "build-frontend" ]; then
     build_frontend
 elif [ $1 == "build" ]; then

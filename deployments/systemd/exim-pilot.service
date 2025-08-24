@@ -1,0 +1,52 @@
+[Unit]
+Description=Exim Control Panel (Exim-Pilot)
+Documentation=https://github.com/andreitelteu/exim-pilot
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=exim-pilot
+Group=exim-pilot
+WorkingDirectory=/opt/exim-pilot
+ExecStart=/opt/exim-pilot/bin/exim-pilot
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=exim-pilot
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/exim-pilot/data /opt/exim-pilot/logs /opt/exim-pilot/backups
+ReadOnlyPaths=/var/log/exim4 /var/spool/exim4
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=4096
+
+# Environment variables
+Environment=EXIM_PILOT_CONFIG=/opt/exim-pilot/config/config.yaml
+Environment=EXIM_PILOT_LOG_LEVEL=info
+
+# Additional security
+CapabilityBoundingSet=
+AmbientCapabilities=
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictSUIDSGID=true
+RemoveIPC=true
+
+[Install]
+WantedBy=multi-user.target
