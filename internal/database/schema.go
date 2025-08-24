@@ -81,31 +81,48 @@ CREATE TABLE IF NOT EXISTS queue_snapshots (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- Performance indexes
+-- Performance indexes - Optimized for common query patterns
 CREATE INDEX IF NOT EXISTS idx_messages_timestamp ON messages(timestamp);
 CREATE INDEX IF NOT EXISTS idx_messages_status ON messages(status);
 CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender);
 CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at);
+-- Composite indexes for common query combinations
+CREATE INDEX IF NOT EXISTS idx_messages_status_timestamp ON messages(status, timestamp);
+CREATE INDEX IF NOT EXISTS idx_messages_sender_timestamp ON messages(sender, timestamp);
 
 CREATE INDEX IF NOT EXISTS idx_recipients_message_id ON recipients(message_id);
 CREATE INDEX IF NOT EXISTS idx_recipients_status ON recipients(status);
 CREATE INDEX IF NOT EXISTS idx_recipients_recipient ON recipients(recipient);
+-- Composite index for recipient status queries
+CREATE INDEX IF NOT EXISTS idx_recipients_status_message_id ON recipients(status, message_id);
 
 CREATE INDEX IF NOT EXISTS idx_delivery_attempts_message_id ON delivery_attempts(message_id);
 CREATE INDEX IF NOT EXISTS idx_delivery_attempts_timestamp ON delivery_attempts(timestamp);
 CREATE INDEX IF NOT EXISTS idx_delivery_attempts_recipient ON delivery_attempts(recipient);
 CREATE INDEX IF NOT EXISTS idx_delivery_attempts_status ON delivery_attempts(status);
+-- Composite indexes for delivery attempt queries
+CREATE INDEX IF NOT EXISTS idx_delivery_attempts_message_recipient ON delivery_attempts(message_id, recipient);
+CREATE INDEX IF NOT EXISTS idx_delivery_attempts_timestamp_status ON delivery_attempts(timestamp, status);
 
 CREATE INDEX IF NOT EXISTS idx_log_entries_timestamp ON log_entries(timestamp);
 CREATE INDEX IF NOT EXISTS idx_log_entries_message_id ON log_entries(message_id);
 CREATE INDEX IF NOT EXISTS idx_log_entries_event ON log_entries(event);
 CREATE INDEX IF NOT EXISTS idx_log_entries_log_type ON log_entries(log_type);
 CREATE INDEX IF NOT EXISTS idx_log_entries_sender ON log_entries(sender);
+-- Composite indexes for log search optimization
+CREATE INDEX IF NOT EXISTS idx_log_entries_timestamp_type ON log_entries(timestamp, log_type);
+CREATE INDEX IF NOT EXISTS idx_log_entries_timestamp_event ON log_entries(timestamp, event);
+CREATE INDEX IF NOT EXISTS idx_log_entries_message_timestamp ON log_entries(message_id, timestamp);
+CREATE INDEX IF NOT EXISTS idx_log_entries_sender_timestamp ON log_entries(sender, timestamp);
+-- Full-text search support for raw_line
+CREATE INDEX IF NOT EXISTS idx_log_entries_raw_line_fts ON log_entries(raw_line);
 
 CREATE INDEX IF NOT EXISTS idx_audit_log_timestamp ON audit_log(timestamp);
 CREATE INDEX IF NOT EXISTS idx_audit_log_action ON audit_log(action);
 CREATE INDEX IF NOT EXISTS idx_audit_log_message_id ON audit_log(message_id);
 CREATE INDEX IF NOT EXISTS idx_audit_log_user_id ON audit_log(user_id);
+-- Composite index for audit queries
+CREATE INDEX IF NOT EXISTS idx_audit_log_timestamp_action ON audit_log(timestamp, action);
 
 CREATE INDEX IF NOT EXISTS idx_queue_snapshots_timestamp ON queue_snapshots(timestamp);
 

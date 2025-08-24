@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { QueueMessage, QueueSearchFilters } from '@/types/queue';
 import { APIResponse } from '@/types/api';
 import { apiService } from '@/services/api';
 import { webSocketService } from '@/services/websocket';
 import { LoadingSpinner, Pagination } from '@/components/Common';
+import { VirtualizedQueueList } from '@/components/Common/VirtualizedList';
+import { useLazyLoading, useOptimizedDataFetching } from '@/hooks/useLazyLoading';
 
 interface QueueListProps {
   searchFilters?: QueueSearchFilters;
@@ -11,6 +13,8 @@ interface QueueListProps {
   selectedMessages?: string[];
   onSelectionChange?: (selectedIds: string[]) => void;
   refreshTrigger?: number;
+  useVirtualization?: boolean;
+  height?: number;
 }
 
 type SortField = 'id' | 'sender' | 'recipients' | 'size' | 'age' | 'status' | 'retry_count';
@@ -27,6 +31,8 @@ export default function QueueList({
   selectedMessages = [],
   onSelectionChange,
   refreshTrigger = 0,
+  useVirtualization = false,
+  height = 600,
 }: QueueListProps) {
   const [messages, setMessages] = useState<QueueMessage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,34 +43,57 @@ export default function QueueList({
   const [sortConfig, setSortConfig] = useState<SortConfig>({ field: 'age', direction: 'desc' });
   const itemsPerPage = 25;
 
+  // Optimized fetch function for lazy loading
+  const fetchMessagesPage = useCallback(async (page: number, pageSize: number) => {
+    const params: any = {
+      page,
+      per_page: pageSize,
+      sort_field: sortConfig.field,
+      sort_direction: sortConfig.direction,
+      ...searchFilters,
+    };
+
+    const response: APIResponse<QueueMessage[]> = await apiService.get('/v1/queue', params);
+    
+    if (response.success && response.data) {
+      return {
+        data: response.data,
+        total: response.meta?.total || 0,
+        hasMore: (response.meta?.page || 1) < (response.meta?.total_pages || 1),
+      };
+    } else {
+      throw new Error(response.error || 'Failed to fetch queue messages');
+    }
+  }, [sortConfig, searchFilters]);
+
+  // Use lazy loading for virtualized lists
+  const lazyLoading = useLazyLoading(fetchMessagesPage, {
+    initialPageSize: useVirtualization ? 100 : itemsPerPage,
+    threshold: 0.8,
+  });
+
   const fetchMessages = useCallback(async () => {
+    if (useVirtualization) {
+      // Reset lazy loading when filters change
+      lazyLoading.reset();
+      await lazyLoading.loadMore();
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
 
-      const params: any = {
-        page: currentPage,
-        per_page: itemsPerPage,
-        sort_field: sortConfig.field,
-        sort_direction: sortConfig.direction,
-        ...searchFilters,
-      };
-
-      const response: APIResponse<QueueMessage[]> = await apiService.get('/v1/queue', params);
-      
-      if (response.success && response.data) {
-        setMessages(response.data);
-        setTotalPages(response.meta?.total_pages || 1);
-        setTotalItems(response.meta?.total || 0);
-      } else {
-        setError(response.error || 'Failed to fetch queue messages');
-      }
+      const result = await fetchMessagesPage(currentPage, itemsPerPage);
+      setMessages(result.data);
+      setTotalPages(Math.ceil(result.total / itemsPerPage));
+      setTotalItems(result.total);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch queue messages');
     } finally {
       setLoading(false);
     }
-  }, [currentPage, sortConfig, searchFilters, refreshTrigger]);
+  }, [currentPage, fetchMessagesPage, useVirtualization, lazyLoading, itemsPerPage]);
 
   // Handle real-time updates via WebSocket
   useEffect(() => {
@@ -191,6 +220,72 @@ export default function QueueList({
     );
   }
 
+  // Determine which messages to display
+  const displayMessages = useVirtualization ? lazyLoading.items : messages;
+  const displayTotalItems = useVirtualization ? lazyLoading.totalItems : totalItems;
+  const displayLoading = useVirtualization ? lazyLoading.loading : loading;
+  const displayError = useVirtualization ? lazyLoading.error : error;
+
+  // Render virtualized list if enabled
+  if (useVirtualization) {
+    if (displayError) {
+      return (
+        <div className="bg-red-50 border border-red-200 rounded-md p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Error loading queue</h3>
+              <div className="mt-2 text-sm text-red-700">
+                <p>{displayError}</p>
+              </div>
+              <div className="mt-4">
+                <button
+                  onClick={() => lazyLoading.reset().then(() => lazyLoading.loadMore())}
+                  className="bg-red-100 px-3 py-2 rounded-md text-sm font-medium text-red-800 hover:bg-red-200"
+                >
+                  Try again
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="bg-white shadow rounded-lg">
+        <div className="px-4 py-5 sm:p-6">
+          <div className="sm:flex sm:items-center">
+            <div className="sm:flex-auto">
+              <h1 className="text-lg font-semibold text-gray-900">Mail Queue</h1>
+              <p className="mt-2 text-sm text-gray-700">
+                {displayTotalItems} message{displayTotalItems !== 1 ? 's' : ''} in queue
+                {displayLoading && ' (Loading...)'}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-8">
+            <VirtualizedQueueList
+              messages={displayMessages}
+              height={height}
+              onMessageSelect={onMessageSelect}
+              selectedMessages={selectedMessages}
+              onSelectionChange={onSelectionChange}
+              hasNextPage={lazyLoading.hasMore}
+              isNextPageLoading={displayLoading}
+              loadNextPage={lazyLoading.loadMore}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white shadow rounded-lg">
       <div className="px-4 py-5 sm:p-6">
@@ -198,7 +293,7 @@ export default function QueueList({
           <div className="sm:flex-auto">
             <h1 className="text-lg font-semibold text-gray-900">Mail Queue</h1>
             <p className="mt-2 text-sm text-gray-700">
-              {totalItems} message{totalItems !== 1 ? 's' : ''} in queue
+              {displayTotalItems} message{displayTotalItems !== 1 ? 's' : ''} in queue
             </p>
           </div>
         </div>
@@ -295,7 +390,7 @@ export default function QueueList({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {messages.map((message) => (
+                  {displayMessages.map((message) => (
                     <tr
                       key={message.id}
                       className={`hover:bg-gray-50 ${selectedMessages.includes(message.id) ? 'bg-blue-50' : ''}`}
@@ -365,7 +460,7 @@ export default function QueueList({
                 </tbody>
               </table>
 
-              {messages.length === 0 && (
+              {displayMessages.length === 0 && (
                 <div className="text-center py-12">
                   <svg
                     className="mx-auto h-12 w-12 text-gray-400"

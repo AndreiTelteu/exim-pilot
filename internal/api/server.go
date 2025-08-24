@@ -197,6 +197,32 @@ func (s *Server) setupRoutes() {
 		// Popular tags
 		protected.HandleFunc("/tags/popular", messageTraceHandlers.handlePopularTags).Methods("GET")
 	}
+
+	// Performance and Optimization routes (Task 13.1) - Protected
+	performanceHandlers := NewPerformanceHandlers(s.repository.GetDB())
+
+	// Database performance endpoints
+	protected.HandleFunc("/performance/database/stats", performanceHandlers.handleDatabaseStats).Methods("GET")
+	protected.HandleFunc("/performance/database/optimize", performanceHandlers.handleOptimizeDatabase).Methods("POST")
+	protected.HandleFunc("/performance/database/query-hints", performanceHandlers.handleQueryOptimizationHints).Methods("GET")
+
+	// Data retention endpoints
+	protected.HandleFunc("/performance/retention/status", performanceHandlers.handleRetentionStatus).Methods("GET")
+	protected.HandleFunc("/performance/retention/cleanup", performanceHandlers.handleCleanupExpiredData).Methods("POST")
+
+	// General performance endpoints
+	protected.HandleFunc("/performance/metrics", performanceHandlers.handlePerformanceMetrics).Methods("GET")
+	protected.HandleFunc("/performance/cache/stats", performanceHandlers.handleCacheStats).Methods("GET")
+	protected.HandleFunc("/performance/memory/stats", performanceHandlers.handleMemoryStats).Methods("GET")
+
+	// Batch optimization
+	protected.HandleFunc("/performance/batch/optimize", performanceHandlers.handleBatchOptimization).Methods("POST")
+
+	// Performance configuration
+	protected.HandleFunc("/performance/config", performanceHandlers.handlePerformanceConfig).Methods("GET", "POST")
+
+	// Performance testing
+	protected.HandleFunc("/performance/test", performanceHandlers.handlePerformanceTest).Methods("POST")
 }
 
 // Start starts the HTTP server
