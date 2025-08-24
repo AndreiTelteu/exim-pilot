@@ -14,21 +14,23 @@ import (
 
 	"github.com/andreitelteu/exim-pilot/internal/database"
 	"github.com/andreitelteu/exim-pilot/internal/parser"
+	"github.com/andreitelteu/exim-pilot/internal/security"
 	"github.com/fsnotify/fsnotify"
 )
 
 // LogMonitor monitors Exim log files for changes and processes new entries
 type LogMonitor struct {
-	watcher      *fsnotify.Watcher
-	parser       *parser.EximParser
-	repository   *database.Repository
-	logProcessor LogProcessor
-	logPaths     []string
-	fileStates   map[string]*FileState
-	mu           sync.RWMutex
-	ctx          context.Context
-	cancel       context.CancelFunc
-	done         chan struct{}
+	watcher         *fsnotify.Watcher
+	parser          *parser.EximParser
+	repository      *database.Repository
+	logProcessor    LogProcessor
+	logPaths        []string
+	fileStates      map[string]*FileState
+	securityService *security.Service
+	mu              sync.RWMutex
+	ctx             context.Context
+	cancel          context.CancelFunc
+	done            chan struct{}
 }
 
 // FileState tracks the state of a monitored log file
@@ -56,14 +58,15 @@ func NewLogMonitor(config Config) (*LogMonitor, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	monitor := &LogMonitor{
-		watcher:    watcher,
-		parser:     parser.NewEximParser(),
-		repository: config.Repository,
-		logPaths:   config.LogPaths,
-		fileStates: make(map[string]*FileState),
-		ctx:        ctx,
-		cancel:     cancel,
-		done:       make(chan struct{}),
+		watcher:         watcher,
+		parser:          parser.NewEximParser(),
+		repository:      config.Repository,
+		logPaths:        config.LogPaths,
+		fileStates:      make(map[string]*FileState),
+		securityService: security.NewService(),
+		ctx:             ctx,
+		cancel:          cancel,
+		done:            make(chan struct{}),
 	}
 
 	return monitor, nil
@@ -152,13 +155,23 @@ func (m *LogMonitor) Stop() error {
 
 // addLogFile adds a log file to the monitor
 func (m *LogMonitor) addLogFile(logPath string) error {
+	// Validate file access with security service
+	if err := m.securityService.ValidateFileAccess(logPath, security.AccessRead); err != nil {
+		log.Printf("SECURITY: File access denied for %s: %v", logPath, err)
+		return fmt.Errorf("security validation failed for log file %s: %w", logPath, err)
+	}
+
 	// Check if file exists
 	info, err := os.Stat(logPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			log.Printf("Log file %s does not exist, will monitor for creation", logPath)
-			// Watch the directory for file creation
+			// Watch the directory for file creation (with security validation)
 			dir := filepath.Dir(logPath)
+			if err := m.securityService.ValidateFileAccess(dir, security.AccessRead); err != nil {
+				log.Printf("SECURITY: Directory access denied for %s: %v", dir, err)
+				return fmt.Errorf("security validation failed for log directory %s: %w", dir, err)
+			}
 			return m.watcher.Add(dir)
 		}
 		return fmt.Errorf("failed to stat log file %s: %w", logPath, err)

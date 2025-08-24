@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/andreitelteu/exim-pilot/internal/database"
+	"github.com/andreitelteu/exim-pilot/internal/security"
 )
 
 // QueueMessage represents a message in the Exim queue
@@ -43,8 +44,9 @@ type Interface interface {
 
 // Manager implements the queue interface
 type Manager struct {
-	eximPath string
-	db       *database.DB
+	eximPath        string
+	db              *database.DB
+	securityService *security.Service
 }
 
 // MessageDetails represents detailed information about a message
@@ -62,8 +64,9 @@ func NewManager(eximPath string, db *database.DB) *Manager {
 		eximPath = "/usr/sbin/exim4" // Default path for Ubuntu/Debian
 	}
 	return &Manager{
-		eximPath: eximPath,
-		db:       db,
+		eximPath:        eximPath,
+		db:              db,
+		securityService: security.NewService(),
 	}
 }
 

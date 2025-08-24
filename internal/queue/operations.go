@@ -3,6 +3,7 @@ package queue
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os/exec"
 
 	"github.com/andreitelteu/exim-pilot/internal/database"
@@ -45,6 +46,19 @@ func (m *Manager) DeliverNow(messageID string, userID string, ipAddress string) 
 		Operation: "deliver_now",
 	}
 
+	// Validate command execution with security service
+	args := []string{"-M", messageID}
+	if err := m.securityService.ValidateSystemCommand(m.eximPath, args); err != nil {
+		log.Printf("SECURITY: Command validation failed for deliver_now: %v", err)
+		result.Success = false
+		result.Error = "Security validation failed: " + err.Error()
+		return result, err
+	}
+
+	// Log security event
+	m.securityService.LogSecurityEvent("QUEUE_OPERATION",
+		fmt.Sprintf("deliver_now messageID=%s userID=%s ip=%s", messageID, userID, ipAddress))
+
 	// Execute exim -M command
 	cmd := exec.Command(m.eximPath, "-M", messageID)
 	output, err := cmd.CombinedOutput()
@@ -74,6 +88,19 @@ func (m *Manager) FreezeMessage(messageID string, userID string, ipAddress strin
 		Operation: "freeze",
 	}
 
+	// Validate command execution with security service
+	args := []string{"-Mf", messageID}
+	if err := m.securityService.ValidateSystemCommand(m.eximPath, args); err != nil {
+		log.Printf("SECURITY: Command validation failed for freeze: %v", err)
+		result.Success = false
+		result.Error = "Security validation failed: " + err.Error()
+		return result, err
+	}
+
+	// Log security event
+	m.securityService.LogSecurityEvent("QUEUE_OPERATION",
+		fmt.Sprintf("freeze messageID=%s userID=%s ip=%s", messageID, userID, ipAddress))
+
 	// Execute exim -Mf command
 	cmd := exec.Command(m.eximPath, "-Mf", messageID)
 	output, err := cmd.CombinedOutput()
@@ -102,6 +129,19 @@ func (m *Manager) ThawMessage(messageID string, userID string, ipAddress string)
 		Operation: "thaw",
 	}
 
+	// Validate command execution with security service
+	args := []string{"-Mt", messageID}
+	if err := m.securityService.ValidateSystemCommand(m.eximPath, args); err != nil {
+		log.Printf("SECURITY: Command validation failed for thaw: %v", err)
+		result.Success = false
+		result.Error = "Security validation failed: " + err.Error()
+		return result, err
+	}
+
+	// Log security event
+	m.securityService.LogSecurityEvent("QUEUE_OPERATION",
+		fmt.Sprintf("thaw messageID=%s userID=%s ip=%s", messageID, userID, ipAddress))
+
 	// Execute exim -Mt command
 	cmd := exec.Command(m.eximPath, "-Mt", messageID)
 	output, err := cmd.CombinedOutput()
@@ -129,6 +169,19 @@ func (m *Manager) DeleteMessage(messageID string, userID string, ipAddress strin
 		MessageID: messageID,
 		Operation: "delete",
 	}
+
+	// Validate command execution with security service
+	args := []string{"-Mrm", messageID}
+	if err := m.securityService.ValidateSystemCommand(m.eximPath, args); err != nil {
+		log.Printf("SECURITY: Command validation failed for delete: %v", err)
+		result.Success = false
+		result.Error = "Security validation failed: " + err.Error()
+		return result, err
+	}
+
+	// Log security event
+	m.securityService.LogSecurityEvent("QUEUE_OPERATION",
+		fmt.Sprintf("delete messageID=%s userID=%s ip=%s", messageID, userID, ipAddress))
 
 	// Execute exim -Mrm command
 	cmd := exec.Command(m.eximPath, "-Mrm", messageID)

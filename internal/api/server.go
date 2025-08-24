@@ -60,6 +60,9 @@ func (s *Server) setupMiddleware() {
 	// Apply CORS to all routes
 	s.router.Use(corsHandler)
 
+	// Security headers middleware (first for all responses)
+	s.router.Use(s.securityHeadersMiddleware)
+
 	// Request logging middleware (if enabled)
 	if s.config.LogRequests {
 		s.router.Use(s.loggingMiddleware)
@@ -70,6 +73,12 @@ func (s *Server) setupMiddleware() {
 
 	// Content-type middleware
 	s.router.Use(s.contentTypeMiddleware)
+
+	// Input validation middleware
+	s.router.Use(s.validationMiddleware)
+
+	// Audit logging middleware (after validation, before auth)
+	s.router.Use(s.auditMiddleware)
 }
 
 // setupRoutes configures all API routes

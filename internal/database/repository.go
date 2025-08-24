@@ -38,6 +38,30 @@ func (r *Repository) CreateQueueSnapshot(snapshot *QueueSnapshot) error {
 	return repo.Create(snapshot)
 }
 
+// CreateAuditLog creates an audit log entry
+func (r *Repository) CreateAuditLog(entry *AuditLog) error {
+	repo := NewAuditLogRepository(r.db)
+	return repo.Create(entry)
+}
+
+// GetAuditLogs retrieves audit log entries with filtering
+func (r *Repository) GetAuditLogs(filters interface{}) ([]*AuditLog, error) {
+	repo := NewAuditLogRepository(r.db)
+	// For now, return basic list - can be enhanced with proper filtering
+	entries, err := repo.List(100, 0, "", "")
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert to pointer slice
+	var result []*AuditLog
+	for i := range entries {
+		result = append(result, &entries[i])
+	}
+
+	return result, nil
+}
+
 // MessageRepository handles message-related database operations
 type MessageRepository struct {
 	*Repository

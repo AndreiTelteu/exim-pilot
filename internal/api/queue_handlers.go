@@ -7,17 +7,20 @@ import (
 	"strings"
 
 	"github.com/andreitelteu/exim-pilot/internal/queue"
+	"github.com/andreitelteu/exim-pilot/internal/validation"
 )
 
 // QueueHandlers contains handlers for queue management endpoints
 type QueueHandlers struct {
-	queueService *queue.Service
+	queueService      *queue.Service
+	validationService *validation.Service
 }
 
 // NewQueueHandlers creates a new queue handlers instance
 func NewQueueHandlers(queueService *queue.Service) *QueueHandlers {
 	return &QueueHandlers{
-		queueService: queueService,
+		queueService:      queueService,
+		validationService: validation.NewService(),
 	}
 }
 
@@ -125,8 +128,8 @@ func (h *QueueHandlers) handleQueueDetails(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// Validate message ID
-	if err := h.queueService.ValidateMessageID(messageID); err != nil {
+	// Validate message ID using validation service
+	if err := h.validationService.ValidateMessageID(messageID); err != nil {
 		WriteBadRequestResponse(w, "Invalid message ID: "+err.Error())
 		return
 	}
@@ -255,23 +258,19 @@ func (h *QueueHandlers) handleQueueBulk(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Validate request
-	if bulkRequest.Operation == "" {
-		WriteBadRequestResponse(w, "Operation is required")
-		return
-	}
-
-	if len(bulkRequest.MessageIDs) == 0 {
-		WriteBadRequestResponse(w, "Message IDs are required")
-		return
-	}
-
-	// Validate message IDs
-	for _, messageID := range bulkRequest.MessageIDs {
-		if err := h.queueService.ValidateMessageID(messageID); err != nil {
-			WriteBadRequestResponse(w, "Invalid message ID '"+messageID+"': "+err.Error())
+	// Validate bulk request using validation service
+	if err := h.validationService.ValidateBulkRequest(bulkRequest.Operation, bulkRequest.MessageIDs); err != nil {
+		if validationErrors, ok := err.(*validation.ValidationErrors); ok {
+			response := APIResponse{
+				Success: false,
+				Error:   "Validation failed",
+				Data:    validationErrors.Errors,
+			}
+			WriteJSONResponse(w, http.StatusBadRequest, response)
 			return
 		}
+		WriteBadRequestResponse(w, err.Error())
+		return
 	}
 
 	userID := h.getUserID(r)
