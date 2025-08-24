@@ -18,6 +18,7 @@ class APIService {
         'Content-Type': 'application/json',
         ...options.headers,
       },
+      credentials: 'include', // Always include cookies for authentication
       ...options,
     };
 
@@ -80,6 +81,38 @@ class APIService {
     return this.request<T>(endpoint, {
       method: 'DELETE',
     });
+  }
+
+  // Authentication methods
+  async login(username: string, password: string): Promise<APIResponse<any>> {
+    return this.request('/v1/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+      credentials: 'include', // Include cookies
+    });
+  }
+
+  async logout(): Promise<APIResponse<any>> {
+    return this.request('/v1/auth/logout', {
+      method: 'POST',
+      credentials: 'include',
+    });
+  }
+
+  async getCurrentUser(): Promise<APIResponse<any>> {
+    try {
+      return await this.request('/v1/auth/me', {
+        credentials: 'include',
+      });
+    } catch (error) {
+      // For auth check, 401/404 responses should be treated as "not authenticated"
+      // rather than an error
+      return {
+        success: false,
+        data: null,
+        error: 'Not authenticated'
+      };
+    }
   }
 }
 

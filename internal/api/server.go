@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/andreitelteu/exim-pilot/internal/auth"
 	"github.com/andreitelteu/exim-pilot/internal/database"
 	"github.com/andreitelteu/exim-pilot/internal/logprocessor"
 	"github.com/andreitelteu/exim-pilot/internal/queue"
@@ -21,10 +22,11 @@ type Server struct {
 	queueService *queue.Service
 	logService   *logprocessor.Service
 	repository   *database.Repository
+	authService  *auth.Service
 }
 
 // NewServer creates a new API server instance
-func NewServer(config *Config, queueService *queue.Service, logService *logprocessor.Service, repository *database.Repository) *Server {
+func NewServer(config *Config, queueService *queue.Service, logService *logprocessor.Service, repository *database.Repository, db *database.DB) *Server {
 	if config == nil {
 		config = NewConfig()
 		config.LoadFromEnv()
@@ -36,6 +38,7 @@ func NewServer(config *Config, queueService *queue.Service, logService *logproce
 		queueService: queueService,
 		logService:   logService,
 		repository:   repository,
+		authService:  auth.NewService(db),
 	}
 
 	s.setupMiddleware()
@@ -65,10 +68,8 @@ func (s *Server) setupMiddleware() {
 	// Error handling middleware
 	s.router.Use(s.errorHandlingMiddleware)
 
-	// Content-Type middleware for API routes
-	s.router.PathPrefix("/api/").Handler(
-		http.HandlerFunc(s.contentTypeMiddleware),
-	).Methods("POST", "PUT", "PATCH")
+	// Content-type middleware
+	s.router.Use(s.contentTypeMiddleware)
 }
 
 // setupRoutes configures all API routes
@@ -76,104 +77,116 @@ func (s *Server) setupRoutes() {
 	// API v1 routes
 	api := s.router.PathPrefix("/api/v1").Subrouter()
 
-	// Health check endpoint
+	// Health check endpoint (no auth required)
 	api.HandleFunc("/health", s.handleHealth).Methods("GET")
 
-	// Queue management routes (Task 5.2)
+	// Authentication routes (no auth required for login)
+	authHandlers := NewAuthHandlers(s.authService)
+	api.HandleFunc("/auth/login", authHandlers.handleLogin).Methods("POST")
+
+	// Protected routes - apply auth middleware
+	protected := api.PathPrefix("").Subrouter()
+	protected.Use(s.authMiddleware)
+
+	// Auth routes that require authentication
+	protected.HandleFunc("/auth/logout", authHandlers.handleLogout).Methods("POST")
+	protected.HandleFunc("/auth/me", authHandlers.handleMe).Methods("GET")
+
+	// Queue management routes (Task 5.2) - Protected
 	if s.queueService != nil {
 		queueHandlers := NewQueueHandlers(s.queueService)
 
 		// Queue listing and search
-		api.HandleFunc("/queue", queueHandlers.handleQueueList).Methods("GET")
-		api.HandleFunc("/queue/search", queueHandlers.handleQueueSearch).Methods("POST")
-		api.HandleFunc("/queue/health", queueHandlers.handleQueueHealth).Methods("GET")
-		api.HandleFunc("/queue/statistics", queueHandlers.handleQueueStatistics).Methods("GET")
+		protected.HandleFunc("/queue", queueHandlers.handleQueueList).Methods("GET")
+		protected.HandleFunc("/queue/search", queueHandlers.handleQueueSearch).Methods("POST")
+		protected.HandleFunc("/queue/health", queueHandlers.handleQueueHealth).Methods("GET")
+		protected.HandleFunc("/queue/statistics", queueHandlers.handleQueueStatistics).Methods("GET")
 
 		// Individual message operations
-		api.HandleFunc("/queue/{id}", queueHandlers.handleQueueDetails).Methods("GET")
-		api.HandleFunc("/queue/{id}/deliver", queueHandlers.handleQueueDeliver).Methods("POST")
-		api.HandleFunc("/queue/{id}/freeze", queueHandlers.handleQueueFreeze).Methods("POST")
-		api.HandleFunc("/queue/{id}/thaw", queueHandlers.handleQueueThaw).Methods("POST")
-		api.HandleFunc("/queue/{id}", queueHandlers.handleQueueDelete).Methods("DELETE")
-		api.HandleFunc("/queue/{id}/history", queueHandlers.handleQueueHistory).Methods("GET")
+		protected.HandleFunc("/queue/{id}", queueHandlers.handleQueueDetails).Methods("GET")
+		protected.HandleFunc("/queue/{id}/deliver", queueHandlers.handleQueueDeliver).Methods("POST")
+		protected.HandleFunc("/queue/{id}/freeze", queueHandlers.handleQueueFreeze).Methods("POST")
+		protected.HandleFunc("/queue/{id}/thaw", queueHandlers.handleQueueThaw).Methods("POST")
+		protected.HandleFunc("/queue/{id}", queueHandlers.handleQueueDelete).Methods("DELETE")
+		protected.HandleFunc("/queue/{id}/history", queueHandlers.handleQueueHistory).Methods("GET")
 
 		// Bulk operations
-		api.HandleFunc("/queue/bulk", queueHandlers.handleQueueBulk).Methods("POST")
+		protected.HandleFunc("/queue/bulk", queueHandlers.handleQueueBulk).Methods("POST")
 	}
 
-	// Log and monitoring routes (Task 5.3)
+	// Log and monitoring routes (Task 5.3) - Protected
 	if s.logService != nil {
 		logHandlers := NewLogHandlers(s.logService)
 
 		// Basic log endpoints
-		api.HandleFunc("/logs", logHandlers.handleLogsList).Methods("GET")
-		api.HandleFunc("/logs/search", logHandlers.handleLogsSearch).Methods("POST")
-		api.HandleFunc("/logs/tail", logHandlers.handleLogsTail).Methods("GET")
-		api.HandleFunc("/logs/export", logHandlers.handleExportLogs).Methods("GET")
-		api.HandleFunc("/logs/statistics", logHandlers.handleLogStatistics).Methods("GET")
+		protected.HandleFunc("/logs", logHandlers.handleLogsList).Methods("GET")
+		protected.HandleFunc("/logs/search", logHandlers.handleLogsSearch).Methods("POST")
+		protected.HandleFunc("/logs/tail", logHandlers.handleLogsTail).Methods("GET")
+		protected.HandleFunc("/logs/export", logHandlers.handleExportLogs).Methods("GET")
+		protected.HandleFunc("/logs/statistics", logHandlers.handleLogStatistics).Methods("GET")
 
 		// Message-specific log endpoints
-		api.HandleFunc("/logs/messages/{id}/history", logHandlers.handleMessageHistory).Methods("GET")
-		api.HandleFunc("/logs/messages/{id}/correlation", logHandlers.handleMessageCorrelation).Methods("GET")
-		api.HandleFunc("/logs/messages/{id}/similar", logHandlers.handleSimilarMessages).Methods("GET")
+		protected.HandleFunc("/logs/messages/{id}/history", logHandlers.handleMessageHistory).Methods("GET")
+		protected.HandleFunc("/logs/messages/{id}/correlation", logHandlers.handleMessageCorrelation).Methods("GET")
+		protected.HandleFunc("/logs/messages/{id}/similar", logHandlers.handleSimilarMessages).Methods("GET")
 
 		// Service management endpoints
-		api.HandleFunc("/logs/service/status", logHandlers.handleServiceStatus).Methods("GET")
-		api.HandleFunc("/logs/correlation/trigger", logHandlers.handleTriggerCorrelation).Methods("POST")
+		protected.HandleFunc("/logs/service/status", logHandlers.handleServiceStatus).Methods("GET")
+		protected.HandleFunc("/logs/correlation/trigger", logHandlers.handleTriggerCorrelation).Methods("POST")
 
 		// Dashboard endpoint
-		api.HandleFunc("/dashboard", logHandlers.handleDashboard).Methods("GET")
+		protected.HandleFunc("/dashboard", logHandlers.handleDashboard).Methods("GET")
 	}
 
-	// Reporting routes (Task 5.4)
+	// Reporting routes (Task 5.4) - Protected
 	if s.logService != nil && s.repository != nil {
 		reportsHandlers := NewReportsHandlers(s.logService, s.queueService, s.repository)
 
 		// Core reporting endpoints
-		api.HandleFunc("/reports/deliverability", reportsHandlers.handleDeliverabilityReport).Methods("GET")
-		api.HandleFunc("/reports/volume", reportsHandlers.handleVolumeReport).Methods("GET")
-		api.HandleFunc("/reports/failures", reportsHandlers.handleFailureReport).Methods("GET")
+		protected.HandleFunc("/reports/deliverability", reportsHandlers.handleDeliverabilityReport).Methods("GET")
+		protected.HandleFunc("/reports/volume", reportsHandlers.handleVolumeReport).Methods("GET")
+		protected.HandleFunc("/reports/failures", reportsHandlers.handleFailureReport).Methods("GET")
 
 		// Message tracing (legacy endpoint)
-		api.HandleFunc("/messages/{id}/trace", reportsHandlers.handleMessageTrace).Methods("GET")
+		protected.HandleFunc("/messages/{id}/trace", reportsHandlers.handleMessageTrace).Methods("GET")
 
 		// Additional reporting endpoints
-		api.HandleFunc("/reports/top-senders", reportsHandlers.handleTopSenders).Methods("GET")
-		api.HandleFunc("/reports/top-recipients", reportsHandlers.handleTopRecipients).Methods("GET")
-		api.HandleFunc("/reports/domains", reportsHandlers.handleDomainAnalysis).Methods("GET")
+		protected.HandleFunc("/reports/top-senders", reportsHandlers.handleTopSenders).Methods("GET")
+		protected.HandleFunc("/reports/top-recipients", reportsHandlers.handleTopRecipients).Methods("GET")
+		protected.HandleFunc("/reports/domains", reportsHandlers.handleDomainAnalysis).Methods("GET")
 	}
 
-	// Enhanced Message Tracing routes (Task 11.1)
+	// Enhanced Message Tracing routes (Task 11.1) - Protected
 	if s.repository != nil {
 		messageTraceHandlers := NewMessageTraceHandlers(s.repository, s.queueService, s.logService)
 
 		// Enhanced message delivery tracing (Task 11.1)
-		api.HandleFunc("/messages/{id}/delivery-trace", messageTraceHandlers.handleMessageDeliveryTrace).Methods("GET")
-		api.HandleFunc("/messages/{id}/recipients/{recipient}/history", messageTraceHandlers.handleRecipientDeliveryHistory).Methods("GET")
-		api.HandleFunc("/messages/{id}/timeline", messageTraceHandlers.handleDeliveryTimeline).Methods("GET")
-		api.HandleFunc("/messages/{id}/retry-schedule", messageTraceHandlers.handleRetrySchedule).Methods("GET")
-		api.HandleFunc("/messages/{id}/delivery-stats", messageTraceHandlers.handleMessageDeliveryStats).Methods("GET")
+		protected.HandleFunc("/messages/{id}/delivery-trace", messageTraceHandlers.handleMessageDeliveryTrace).Methods("GET")
+		protected.HandleFunc("/messages/{id}/recipients/{recipient}/history", messageTraceHandlers.handleRecipientDeliveryHistory).Methods("GET")
+		protected.HandleFunc("/messages/{id}/timeline", messageTraceHandlers.handleDeliveryTimeline).Methods("GET")
+		protected.HandleFunc("/messages/{id}/retry-schedule", messageTraceHandlers.handleRetrySchedule).Methods("GET")
+		protected.HandleFunc("/messages/{id}/delivery-stats", messageTraceHandlers.handleMessageDeliveryStats).Methods("GET")
 
 		// Delivery attempt details
-		api.HandleFunc("/delivery-attempts/{id}", messageTraceHandlers.handleDeliveryAttemptDetails).Methods("GET")
+		protected.HandleFunc("/delivery-attempts/{id}", messageTraceHandlers.handleDeliveryAttemptDetails).Methods("GET")
 
 		// Troubleshooting and notes functionality (Task 11.2)
-		api.HandleFunc("/messages/{id}/threaded-timeline", messageTraceHandlers.handleThreadedTimeline).Methods("GET")
-		api.HandleFunc("/messages/{id}/content", messageTraceHandlers.handleMessageContent).Methods("GET")
+		protected.HandleFunc("/messages/{id}/threaded-timeline", messageTraceHandlers.handleThreadedTimeline).Methods("GET")
+		protected.HandleFunc("/messages/{id}/content", messageTraceHandlers.handleMessageContent).Methods("GET")
 
 		// Message notes
-		api.HandleFunc("/messages/{id}/notes", messageTraceHandlers.handleMessageNotes).Methods("GET")
-		api.HandleFunc("/messages/{id}/notes", messageTraceHandlers.handleCreateMessageNote).Methods("POST")
-		api.HandleFunc("/messages/{id}/notes/{noteId}", messageTraceHandlers.handleUpdateMessageNote).Methods("PUT")
-		api.HandleFunc("/messages/{id}/notes/{noteId}", messageTraceHandlers.handleDeleteMessageNote).Methods("DELETE")
+		protected.HandleFunc("/messages/{id}/notes", messageTraceHandlers.handleMessageNotes).Methods("GET")
+		protected.HandleFunc("/messages/{id}/notes", messageTraceHandlers.handleCreateMessageNote).Methods("POST")
+		protected.HandleFunc("/messages/{id}/notes/{noteId}", messageTraceHandlers.handleUpdateMessageNote).Methods("PUT")
+		protected.HandleFunc("/messages/{id}/notes/{noteId}", messageTraceHandlers.handleDeleteMessageNote).Methods("DELETE")
 
 		// Message tags
-		api.HandleFunc("/messages/{id}/tags", messageTraceHandlers.handleMessageTags).Methods("GET")
-		api.HandleFunc("/messages/{id}/tags", messageTraceHandlers.handleCreateMessageTag).Methods("POST")
-		api.HandleFunc("/messages/{id}/tags/{tagId}", messageTraceHandlers.handleDeleteMessageTag).Methods("DELETE")
+		protected.HandleFunc("/messages/{id}/tags", messageTraceHandlers.handleMessageTags).Methods("GET")
+		protected.HandleFunc("/messages/{id}/tags", messageTraceHandlers.handleCreateMessageTag).Methods("POST")
+		protected.HandleFunc("/messages/{id}/tags/{tagId}", messageTraceHandlers.handleDeleteMessageTag).Methods("DELETE")
 
 		// Popular tags
-		api.HandleFunc("/tags/popular", messageTraceHandlers.handlePopularTags).Methods("GET")
+		protected.HandleFunc("/tags/popular", messageTraceHandlers.handlePopularTags).Methods("GET")
 	}
 }
 

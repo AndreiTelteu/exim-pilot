@@ -1382,3 +1382,197 @@ func (r *MessageTraceRepository) GetMessageContent(messageID string) (*MessageCo
 
 	return content, nil
 }
+
+// UserRepository handles user-related database operations
+type UserRepository struct {
+	*Repository
+}
+
+// NewUserRepository creates a new user repository
+func NewUserRepository(db *DB) *UserRepository {
+	return &UserRepository{Repository: NewRepository(db)}
+}
+
+// Create inserts a new user
+func (r *UserRepository) Create(user *User) error {
+	query := `
+		INSERT INTO users (username, password_hash, email, full_name, is_active, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+	`
+
+	result, err := r.db.Exec(query, user.Username, user.PasswordHash, user.Email, user.FullName, user.IsActive)
+	if err != nil {
+		return fmt.Errorf("failed to create user: %w", err)
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return fmt.Errorf("failed to get user ID: %w", err)
+	}
+
+	user.ID = id
+	return nil
+}
+
+// GetByUsername retrieves a user by username
+func (r *UserRepository) GetByUsername(username string) (*User, error) {
+	query := `
+		SELECT id, username, password_hash, email, full_name, is_active, last_login_at, created_at, updated_at
+		FROM users
+		WHERE username = ? AND is_active = 1
+	`
+
+	var user User
+	err := r.db.QueryRow(query, username).Scan(
+		&user.ID, &user.Username, &user.PasswordHash, &user.Email, &user.FullName,
+		&user.IsActive, &user.LastLoginAt, &user.CreatedAt, &user.UpdatedAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("user not found")
+		}
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	return &user, nil
+}
+
+// GetByID retrieves a user by ID
+func (r *UserRepository) GetByID(id int64) (*User, error) {
+	query := `
+		SELECT id, username, password_hash, email, full_name, is_active, last_login_at, created_at, updated_at
+		FROM users
+		WHERE id = ? AND is_active = 1
+	`
+
+	var user User
+	err := r.db.QueryRow(query, id).Scan(
+		&user.ID, &user.Username, &user.PasswordHash, &user.Email, &user.FullName,
+		&user.IsActive, &user.LastLoginAt, &user.CreatedAt, &user.UpdatedAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("user not found")
+		}
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	return &user, nil
+}
+
+// UpdateLastLogin updates the user's last login timestamp
+func (r *UserRepository) UpdateLastLogin(userID int64) error {
+	query := `
+		UPDATE users 
+		SET last_login_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+		WHERE id = ?
+	`
+
+	_, err := r.db.Exec(query, userID)
+	if err != nil {
+		return fmt.Errorf("failed to update last login: %w", err)
+	}
+
+	return nil
+}
+
+// SessionRepository handles session-related database operations
+type SessionRepository struct {
+	*Repository
+}
+
+// NewSessionRepository creates a new session repository
+func NewSessionRepository(db *DB) *SessionRepository {
+	return &SessionRepository{Repository: NewRepository(db)}
+}
+
+// Create inserts a new session
+func (r *SessionRepository) Create(session *Session) error {
+	query := `
+		INSERT INTO sessions (id, user_id, expires_at, ip_address, user_agent, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+	`
+
+	_, err := r.db.Exec(query, session.ID, session.UserID, session.ExpiresAt, session.IPAddress, session.UserAgent)
+	if err != nil {
+		return fmt.Errorf("failed to create session: %w", err)
+	}
+
+	return nil
+}
+
+// GetByID retrieves a session by ID
+func (r *SessionRepository) GetByID(id string) (*Session, error) {
+	query := `
+		SELECT id, user_id, expires_at, ip_address, user_agent, created_at, updated_at
+		FROM sessions
+		WHERE id = ? AND expires_at > CURRENT_TIMESTAMP
+	`
+
+	var session Session
+	err := r.db.QueryRow(query, id).Scan(
+		&session.ID, &session.UserID, &session.ExpiresAt, &session.IPAddress,
+		&session.UserAgent, &session.CreatedAt, &session.UpdatedAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("session not found or expired")
+		}
+		return nil, fmt.Errorf("failed to get session: %w", err)
+	}
+
+	return &session, nil
+}
+
+// Delete removes a session by ID
+func (r *SessionRepository) Delete(id string) error {
+	query := "DELETE FROM sessions WHERE id = ?"
+
+	result, err := r.db.Exec(query, id)
+	if err != nil {
+		return fmt.Errorf("failed to delete session: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get affected rows: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("session not found")
+	}
+
+	return nil
+}
+
+// DeleteExpired removes all expired sessions
+func (r *SessionRepository) DeleteExpired() (int64, error) {
+	query := "DELETE FROM sessions WHERE expires_at <= CURRENT_TIMESTAMP"
+
+	result, err := r.db.Exec(query)
+	if err != nil {
+		return 0, fmt.Errorf("failed to delete expired sessions: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get affected rows: %w", err)
+	}
+
+	return rowsAffected, nil
+}
+
+// DeleteByUserID removes all sessions for a user
+func (r *SessionRepository) DeleteByUserID(userID int64) error {
+	query := "DELETE FROM sessions WHERE user_id = ?"
+
+	_, err := r.db.Exec(query, userID)
+	if err != nil {
+		return fmt.Errorf("failed to delete user sessions: %w", err)
+	}
+
+	return nil
+}

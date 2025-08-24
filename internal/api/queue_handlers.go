@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -304,14 +305,13 @@ func (h *QueueHandlers) handleQueueBulk(w http.ResponseWriter, r *http.Request) 
 
 // Helper methods
 
-// getUserID extracts user ID from request context (placeholder implementation)
+// getUserID extracts user ID from request context
 func (h *QueueHandlers) getUserID(r *http.Request) string {
-	// In a real implementation, this would extract the user ID from JWT token or session
-	// For now, return a placeholder
-	if userID := r.Header.Get("X-User-ID"); userID != "" {
-		return userID
+	user, ok := GetUserFromContext(r.Context())
+	if !ok {
+		return "anonymous"
 	}
-	return "anonymous"
+	return fmt.Sprintf("%d", user.ID)
 }
 
 // getClientIP extracts client IP address from request

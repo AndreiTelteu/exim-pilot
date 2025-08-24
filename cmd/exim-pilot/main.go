@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/andreitelteu/exim-pilot/internal/api"
+	"github.com/andreitelteu/exim-pilot/internal/auth"
 	"github.com/andreitelteu/exim-pilot/internal/database"
 	"github.com/andreitelteu/exim-pilot/internal/logprocessor"
 	"github.com/andreitelteu/exim-pilot/internal/queue"
@@ -58,10 +59,15 @@ func main() {
 	}
 	defer logService.Stop()
 
+	// Initialize default admin user if no users exist
+	if err := initializeDefaultUser(db); err != nil {
+		log.Printf("Warning: Failed to initialize default user: %v", err)
+	}
+
 	// Initialize API server
 	apiConfig := api.NewConfig()
 	apiConfig.LoadFromEnv()
-	server := api.NewServer(apiConfig, queueService, logService, repository)
+	server := api.NewServer(apiConfig, queueService, logService, repository, db)
 
 	// Start server in a goroutine
 	go func() {
@@ -86,4 +92,32 @@ func main() {
 	}
 
 	log.Println("Server exited")
+}
+
+// initializeDefaultUser creates a default admin user if no users exist
+func initializeDefaultUser(db *database.DB) error {
+	authService := auth.NewService(db)
+	userRepo := database.NewUserRepository(db)
+
+	// Check if any users exist
+	_, err := userRepo.GetByUsername("admin")
+	if err == nil {
+		// User already exists
+		return nil
+	}
+
+	// Create default admin user
+	defaultPassword := os.Getenv("ADMIN_PASSWORD")
+	if defaultPassword == "" {
+		defaultPassword = "admin123" // Default password - should be changed
+		log.Println("Warning: Using default password 'admin123' for admin user. Please change it after first login.")
+	}
+
+	_, err = authService.CreateUser("admin", defaultPassword, "admin@localhost", "Administrator")
+	if err != nil {
+		return fmt.Errorf("failed to create default admin user: %w", err)
+	}
+
+	log.Println("Created default admin user with username 'admin'")
+	return nil
 }

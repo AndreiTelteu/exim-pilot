@@ -1,10 +1,20 @@
 import { useLocation } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Navigation() {
   const { state } = useApp();
+  const { user, logout } = useAuth();
   const location = useLocation();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', path: '/' },
@@ -73,9 +83,17 @@ export default function Navigation() {
             </div>
 
             {/* User */}
-            {state.user && (
-              <div className="text-sm text-gray-600">
-                Welcome, {state.user.username}
+            {user && (
+              <div className="flex items-center space-x-3">
+                <div className="text-sm text-gray-600">
+                  Welcome, {user.username}
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="text-sm text-gray-600 hover:text-gray-900 px-3 py-1 rounded-md hover:bg-gray-50"
+                >
+                  Logout
+                </button>
               </div>
             )}
           </div>

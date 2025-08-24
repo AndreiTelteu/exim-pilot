@@ -249,9 +249,9 @@
     - YOU ARE NOT ALLOWED TO MAKE ANY UNIT TESTS FOR ANYTHING
     - _Requirements: 5.4, 5.1, 6.6_
 
-- [ ] 12. Security and Authentication
+- [-] 12. Security and Authentication
 
-  - [ ] 12.1 Implement basic authentication system
+  - [x] 12.1 Implement basic authentication system
 
     - Create simple username/password authentication
     - Add session management with secure cookies

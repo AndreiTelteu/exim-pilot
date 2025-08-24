@@ -301,3 +301,40 @@ type DeliveryThread struct {
 	Summary    string                  `json:"summary"`
 	Status     string                  `json:"status"`
 }
+
+// User represents a system user for authentication
+type User struct {
+	ID           int64      `json:"id" db:"id"`
+	Username     string     `json:"username" db:"username"`
+	PasswordHash string     `json:"-" db:"password_hash"` // Never include in JSON
+	Email        *string    `json:"email" db:"email"`
+	FullName     *string    `json:"full_name" db:"full_name"`
+	IsActive     bool       `json:"is_active" db:"is_active"`
+	LastLoginAt  *time.Time `json:"last_login_at" db:"last_login_at"`
+	CreatedAt    time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt    time.Time  `json:"updated_at" db:"updated_at"`
+}
+
+// Session represents a user session
+type Session struct {
+	ID        string    `json:"id" db:"id"`
+	UserID    int64     `json:"user_id" db:"user_id"`
+	ExpiresAt time.Time `json:"expires_at" db:"expires_at"`
+	IPAddress *string   `json:"ip_address" db:"ip_address"`
+	UserAgent *string   `json:"user_agent" db:"user_agent"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+}
+
+// LoginRequest represents a login request
+type LoginRequest struct {
+	Username string `json:"username" validate:"required"`
+	Password string `json:"password" validate:"required"`
+}
+
+// LoginResponse represents a login response
+type LoginResponse struct {
+	User      User      `json:"user"`
+	SessionID string    `json:"session_id"`
+	ExpiresAt time.Time `json:"expires_at"`
+}

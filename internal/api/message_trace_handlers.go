@@ -743,12 +743,11 @@ func (h *MessageTraceHandlers) handlePopularTags(w http.ResponseWriter, r *http.
 	})
 }
 
-// getUserID extracts user ID from request context (enhanced implementation)
+// getUserID extracts user ID from request context
 func (h *MessageTraceHandlers) getUserID(r *http.Request) string {
-	// In a real implementation, this would extract the user ID from JWT token or session
-	// For now, return a placeholder or header value
-	if userID := r.Header.Get("X-User-ID"); userID != "" {
-		return userID
+	user, ok := GetUserFromContext(r.Context())
+	if !ok {
+		return "anonymous"
 	}
-	return "anonymous"
+	return fmt.Sprintf("%d", user.ID)
 }

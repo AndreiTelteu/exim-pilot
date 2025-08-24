@@ -2,7 +2,9 @@
 import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { ErrorBoundary, Layout } from './components/Common';
+import { Login } from './components/Auth';
 import { webSocketService } from './services/websocket';
 import Dashboard from './components/Dashboard/Dashboard';
 import Queue from './components/Queue/Queue';
@@ -14,16 +16,32 @@ import { Reports } from './components/Reports';
 import { MessageTrace } from './components/MessageTrace';
 
 function AppContent() {
-  useEffect(() => {
-    // Initialize WebSocket connection
-    webSocketService.connect().catch(error => {
-      console.error('Failed to connect to WebSocket:', error);
-    });
+  const { isAuthenticated, isLoading } = useAuth();
 
-    return () => {
-      webSocketService.disconnect();
-    };
-  }, []);
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Initialize WebSocket connection only when authenticated
+      webSocketService.connect().catch(error => {
+        console.error('Failed to connect to WebSocket:', error);
+      });
+
+      return () => {
+        webSocketService.disconnect();
+      };
+    }
+  }, [isAuthenticated]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Login />;
+  }
 
   return (
     <Layout>
@@ -44,11 +62,13 @@ function AppContent() {
 function App() {
   return (
     <ErrorBoundary>
-      <AppProvider>
-        <Router>
-          <AppContent />
-        </Router>
-      </AppProvider>
+      <AuthProvider>
+        <AppProvider>
+          <Router>
+            <AppContent />
+          </Router>
+        </AppProvider>
+      </AuthProvider>
     </ErrorBoundary>
   );
 }
