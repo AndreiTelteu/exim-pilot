@@ -2,6 +2,7 @@ import { useLocation } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
+import { HelpButton } from './HelpModal';
 
 export default function Navigation() {
   const { state } = useApp();
@@ -62,6 +63,16 @@ export default function Navigation() {
 
           {/* User Info */}
           <div className="flex items-center space-x-4">
+            {/* Help Button */}
+            <HelpButton 
+              section={
+                location.pathname.startsWith('/queue') ? 'queue' :
+                location.pathname.startsWith('/logs') ? 'logs' :
+                location.pathname.startsWith('/reports') ? 'reports' :
+                'dashboard'
+              }
+            />
+
             {/* Connection Status */}
             <div className="flex items-center space-x-2">
               <div

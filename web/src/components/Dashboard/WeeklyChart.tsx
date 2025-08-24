@@ -1,6 +1,8 @@
 import ReactECharts from 'echarts-for-react';
 import { EChartsOption } from 'echarts';
 import { WeeklyOverviewData } from '@/types/dashboard';
+import { HelpTooltip } from '../Common/HelpTooltip';
+import { getHelpContent } from '../../utils/helpContent';
 
 interface WeeklyChartProps {
   data: WeeklyOverviewData | null;
@@ -225,6 +227,13 @@ export function WeeklyChart({ data, loading = false }: WeeklyChartProps) {
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="flex items-center gap-2 mb-4">
+        <h3 className="text-lg font-semibold text-gray-800">Weekly Email Overview</h3>
+        <HelpTooltip 
+          content={getHelpContent('dashboard', 'weeklyChart')}
+          position="right"
+        />
+      </div>
       <ReactECharts 
         option={option} 
         style={{ height: '400px', width: '100%' }} 

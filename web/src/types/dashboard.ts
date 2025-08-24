@@ -44,4 +44,5 @@ export interface MetricsCardProps {
     direction: 'up' | 'down' | 'stable';
   };
   loading?: boolean;
+  helpContent?: string;
 }

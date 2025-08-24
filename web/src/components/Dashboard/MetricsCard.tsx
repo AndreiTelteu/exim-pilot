@@ -1,4 +1,5 @@
 import { MetricsCardProps } from '@/types/dashboard';
+import { HelpTooltip } from '../Common/HelpTooltip';
 
 const colorClasses = {
   blue: {
@@ -57,7 +58,8 @@ export function MetricsCard({
   subtitle, 
   color = 'blue', 
   trend, 
-  loading = false 
+  loading = false,
+  helpContent
 }: MetricsCardProps) {
   const colors = colorClasses[color];
 
@@ -77,9 +79,14 @@ export function MetricsCard({
     <div className={`${colors.bg} p-6 rounded-lg border border-gray-200 transition-all duration-200 hover:shadow-md`}>
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <h3 className={`font-semibold ${colors.text} text-sm uppercase tracking-wide`}>
-            {title}
-          </h3>
+          <div className="flex items-center gap-2">
+            <h3 className={`font-semibold ${colors.text} text-sm uppercase tracking-wide`}>
+              {title}
+            </h3>
+            {helpContent && (
+              <HelpTooltip content={helpContent} position="top" />
+            )}
+          </div>
           <div className={`text-3xl font-bold ${colors.value} mt-2 mb-1`}>
             {typeof value === 'number' ? value.toLocaleString() : value}
           </div>

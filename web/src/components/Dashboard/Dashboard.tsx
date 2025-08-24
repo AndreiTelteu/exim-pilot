@@ -5,6 +5,8 @@ import { MetricsCard } from './MetricsCard';
 import { WeeklyChart } from './WeeklyChart';
 import { useDashboard } from '@/hooks/useDashboard';
 import { webSocketService } from '@/services/websocket';
+import { HelpTooltip, HelpSection } from '../Common/HelpTooltip';
+import { getHelpContent } from '../../utils/helpContent';
 
 function formatAge(seconds: number): string {
   if (seconds < 60) return `${seconds}s`;
@@ -64,9 +66,15 @@ export default function Dashboard() {
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-2xl font-semibold text-gray-800">
-              Welcome to Exim-Pilot
-            </h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-2xl font-semibold text-gray-800">
+                Welcome to Exim-Pilot
+              </h2>
+              <HelpTooltip 
+                content={getHelpContent('dashboard', 'overview')}
+                position="right"
+              />
+            </div>
             <p className="text-gray-600 mt-1">
               Your comprehensive web-based management interface for Exim mail servers.
             </p>
@@ -112,6 +120,7 @@ export default function Dashboard() {
                      metrics.queue.recent_growth < 0 ? 'down' : 'stable'
           } : undefined}
           loading={loading}
+          helpContent={getHelpContent('dashboard', 'queueMessages')}
         />
         
         <MetricsCard
@@ -120,6 +129,7 @@ export default function Dashboard() {
           subtitle={`${(metrics?.delivery.success_rate ?? 0).toFixed(1)}% success rate`}
           color="green"
           loading={loading}
+          helpContent={getHelpContent('dashboard', 'deliveredToday')}
         />
         
         <MetricsCard
@@ -128,6 +138,7 @@ export default function Dashboard() {
           subtitle="Temporary delivery failures"
           color="yellow"
           loading={loading}
+          helpContent={getHelpContent('dashboard', 'deferred')}
         />
         
         <MetricsCard
@@ -139,6 +150,7 @@ export default function Dashboard() {
           }
           color="red"
           loading={loading}
+          helpContent={getHelpContent('dashboard', 'frozen')}
         />
       </div>
 
@@ -150,6 +162,7 @@ export default function Dashboard() {
           subtitle="Permanent delivery failures"
           color="red"
           loading={loading}
+          helpContent={getHelpContent('dashboard', 'failedToday')}
         />
         
         <MetricsCard
@@ -158,6 +171,7 @@ export default function Dashboard() {
           subtitle="Awaiting delivery"
           color="yellow"
           loading={loading}
+          helpContent={getHelpContent('dashboard', 'pendingToday')}
         />
         
         <MetricsCard
@@ -166,11 +180,45 @@ export default function Dashboard() {
           subtitle="Processed today"
           color="gray"
           loading={loading}
+          helpContent={getHelpContent('dashboard', 'logEntries')}
         />
       </div>
 
       {/* Weekly Overview Chart */}
       <WeeklyChart data={weeklyData} loading={loading} />
+
+      {/* Help Section */}
+      <div className="space-y-4">
+        <HelpSection title="Dashboard Help" className="bg-blue-50 border-blue-200">
+          <div className="space-y-4">
+            <div>
+              <h4 className="font-semibold text-gray-800 mb-2">Understanding the Metrics</h4>
+              <ul className="space-y-2 text-sm text-gray-700">
+                <li><strong>Queue Messages:</strong> Total messages waiting for delivery</li>
+                <li><strong>Delivered Today:</strong> Successfully delivered messages with success rate</li>
+                <li><strong>Deferred:</strong> Messages with temporary delivery failures</li>
+                <li><strong>Frozen:</strong> Messages paused and requiring manual intervention</li>
+                <li><strong>Failed Today:</strong> Messages with permanent delivery failures</li>
+                <li><strong>Pending Today:</strong> Messages currently being processed</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold text-gray-800 mb-2">Real-time Updates</h4>
+              <p className="text-sm text-gray-700">
+                The dashboard automatically updates every 30 seconds when connected. The status indicator 
+                shows your connection state: Green (Live), Yellow (Connecting), Red (Offline).
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-gray-800 mb-2">Weekly Chart</h4>
+              <p className="text-sm text-gray-700">
+                The weekly overview shows email activity trends. Use the chart controls to zoom and save images. 
+                Click on chart elements for detailed information.
+              </p>
+            </div>
+          </div>
+        </HelpSection>
+      </div>
 
       {/* Last Updated */}
       {metrics?.system.last_updated && (
