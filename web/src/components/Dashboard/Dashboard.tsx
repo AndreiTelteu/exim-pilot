@@ -111,13 +111,13 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricsCard
           title="Queue Messages"
-          value={metrics?.queue.total ?? 0}
+          value={metrics?.queue?.total ?? 0}
           subtitle="Total messages in queue"
           color="blue"
-          trend={metrics?.queue.recent_growth ? {
-            value: metrics.queue.recent_growth,
-            direction: metrics.queue.recent_growth > 0 ? 'up' : 
-                     metrics.queue.recent_growth < 0 ? 'down' : 'stable'
+          trend={metrics?.queue?.recent_growth ? {
+            value: metrics?.queue?.recent_growth,
+            direction: metrics?.queue?.recent_growth > 0 ? 'up' : 
+                     metrics?.queue?.recent_growth < 0 ? 'down' : 'stable'
           } : undefined}
           loading={loading}
           helpContent={getHelpContent('dashboard', 'queueMessages')}
@@ -125,8 +125,8 @@ export default function Dashboard() {
         
         <MetricsCard
           title="Delivered Today"
-          value={metrics?.delivery.delivered_today ?? 0}
-          subtitle={`${(metrics?.delivery.success_rate ?? 0).toFixed(1)}% success rate`}
+          value={metrics?.delivery?.delivered_today ?? 0}
+          subtitle={`${(metrics?.delivery?.success_rate ?? 0).toFixed(1)}% success rate`}
           color="green"
           loading={loading}
           helpContent={getHelpContent('dashboard', 'deliveredToday')}
@@ -134,7 +134,7 @@ export default function Dashboard() {
         
         <MetricsCard
           title="Deferred"
-          value={metrics?.queue.deferred ?? 0}
+          value={metrics?.queue?.deferred ?? 0}
           subtitle="Temporary delivery failures"
           color="yellow"
           loading={loading}
@@ -143,9 +143,9 @@ export default function Dashboard() {
         
         <MetricsCard
           title="Frozen"
-          value={metrics?.queue.frozen ?? 0}
-          subtitle={metrics?.queue.oldest_message_age ? 
-            `Oldest: ${formatAge(metrics.queue.oldest_message_age)}` : 
+          value={metrics?.queue?.frozen ?? 0}
+          subtitle={metrics?.queue?.oldest_message_age ? 
+            `Oldest: ${formatAge(metrics.queue?.oldest_message_age)}` : 
             'No frozen messages'
           }
           color="red"
@@ -158,7 +158,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <MetricsCard
           title="Failed Today"
-          value={metrics?.delivery.failed_today ?? 0}
+          value={metrics?.delivery?.failed_today ?? 0}
           subtitle="Permanent delivery failures"
           color="red"
           loading={loading}
@@ -167,7 +167,7 @@ export default function Dashboard() {
         
         <MetricsCard
           title="Pending Today"
-          value={metrics?.delivery.pending_today ?? 0}
+          value={metrics?.delivery?.pending_today ?? 0}
           subtitle="Awaiting delivery"
           color="yellow"
           loading={loading}
@@ -176,7 +176,7 @@ export default function Dashboard() {
         
         <MetricsCard
           title="Log Entries"
-          value={metrics?.system.log_entries_today ?? 0}
+          value={metrics?.system?.log_entries_today ?? 0}
           subtitle="Processed today"
           color="gray"
           loading={loading}
@@ -221,9 +221,9 @@ export default function Dashboard() {
       </div>
 
       {/* Last Updated */}
-      {metrics?.system.last_updated && (
+      {metrics?.system?.last_updated && (
         <div className="text-center text-sm text-gray-500">
-          Last updated: {new Date(metrics.system.last_updated).toLocaleString()}
+          Last updated: {new Date(metrics?.system?.last_updated).toLocaleString()}
         </div>
       )}
     </div>

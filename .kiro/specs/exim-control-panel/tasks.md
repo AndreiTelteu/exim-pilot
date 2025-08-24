@@ -327,6 +327,7 @@
     - _Requirements: 8.3, 8.5_
 
   - [ ] 15.2 Final integration testing and polish
+
     - Perform end-to-end testing with real Exim installation
     - Test with large log files and queue sizes
     - Verify all audit logging and security measures

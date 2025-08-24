@@ -3,8 +3,8 @@ testdata_dir = "testdata"
 tmp_dir = "tmp"
 
 [build]
-  args_bin = []
   bin = "./tmp/main.exe"
+  args_bin = ["--config", "config/config.yaml"]
   cmd = "bash.exe -c './make build-dev'"
   delay = 1000
   exclude_dir = ["assets", "tmp", "vendor", "testdata", "web/node_modules", "web/dist"]

@@ -76,7 +76,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, section }
               content: (
                 <div className="space-y-3">
                   <div><strong>Sender Filter:</strong> Use wildcards like *@domain.com to match all senders from a domain</div>
-                  <div><strong>Age Filter:</strong> Examples: >2h (older than 2 hours), <30m (newer than 30 minutes)</div>
+                  <div><strong>Age Filter:</strong> Examples: {'>2h'} (older than 2 hours), {'<30m'} (newer than 30 minutes)</div>
                   <div><strong>Status Filter:</strong> Filter by queued, deferred, or frozen status</div>
                   <div><strong>Bulk Operations:</strong> Select multiple messages for batch operations</div>
                 </div>

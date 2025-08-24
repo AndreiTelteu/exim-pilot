@@ -315,6 +315,55 @@ DROP TABLE IF EXISTS system_status;
 DROP TABLE IF EXISTS system_config;
 `,
 		},
+		{
+			Version:     5,
+			Description: "Add missing created_at column to audit_log table",
+			Up: `
+-- Add created_at column to audit_log table
+ALTER TABLE audit_log ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+
+-- Update existing records to have created_at = timestamp
+UPDATE audit_log SET created_at = timestamp WHERE created_at IS NULL;
+`,
+			Down: `
+-- Remove created_at column from audit_log table
+-- Note: SQLite doesn't support DROP COLUMN, so we'd need to recreate the table
+-- For safety, we'll leave the column in place during rollback
+`,
+		},
+		{
+			Version:     6,
+			Description: "Add missing created_at column to log_entries and fix users table column names",
+			Up: `
+-- Add created_at column to log_entries table
+ALTER TABLE log_entries ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+
+-- Update existing log_entries records to have created_at = timestamp
+UPDATE log_entries SET created_at = timestamp WHERE created_at IS NULL;
+
+-- Fix users table column names to match the model
+ALTER TABLE users RENAME COLUMN active TO is_active;
+ALTER TABLE users RENAME COLUMN last_login TO last_login_at;
+
+-- Add missing columns to various tables that were added in schema but not in migrations
+ALTER TABLE recipients ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE recipients ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE delivery_attempts ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE queue_snapshots ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE sessions ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+
+-- Update existing records
+UPDATE recipients SET created_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE created_at IS NULL;
+UPDATE delivery_attempts SET created_at = CURRENT_TIMESTAMP WHERE created_at IS NULL;
+UPDATE queue_snapshots SET created_at = CURRENT_TIMESTAMP WHERE created_at IS NULL;
+UPDATE sessions SET updated_at = created_at WHERE updated_at IS NULL;
+`,
+			Down: `
+-- Note: SQLite doesn't support DROP COLUMN, so we'd need to recreate tables
+-- For safety, we'll leave the columns in place during rollback
+-- This is a complex rollback that would require table recreation
+`,
+		},
 	}
 }
 

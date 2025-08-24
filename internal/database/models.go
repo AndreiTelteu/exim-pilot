@@ -309,8 +309,8 @@ type User struct {
 	PasswordHash string     `json:"-" db:"password_hash"` // Never include in JSON
 	Email        *string    `json:"email" db:"email"`
 	FullName     *string    `json:"full_name" db:"full_name"`
-	IsActive     bool       `json:"is_active" db:"is_active"`
-	LastLoginAt  *time.Time `json:"last_login_at" db:"last_login_at"`
+	IsActive     bool       `json:"is_active" db:"active"`
+	LastLoginAt  *time.Time `json:"last_login_at" db:"last_login"`
 	CreatedAt    time.Time  `json:"created_at" db:"created_at"`
 	UpdatedAt    time.Time  `json:"updated_at" db:"updated_at"`
 }
