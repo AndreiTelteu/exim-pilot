@@ -72,6 +72,7 @@ function VirtualizedList<T>({
             <List
               ref={ref}
               height={height}
+              width="100%"
               itemCount={itemCount}
               itemSize={itemHeight}
               onItemsRendered={onItemsRendered}
@@ -88,6 +89,7 @@ function VirtualizedList<T>({
     return (
       <List
         height={height}
+        width="100%"
         itemCount={itemCount}
         itemSize={itemHeight}
         overscanCount={overscanCount}

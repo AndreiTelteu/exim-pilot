@@ -212,7 +212,7 @@ func (h *PerformanceHandlers) handlePerformanceConfig(w http.ResponseWriter, r *
 		})
 
 	default:
-		WriteMethodNotAllowedResponse(w)
+		WriteMethodNotAllowedResponse(w, "Method not allowed")
 	}
 }
 

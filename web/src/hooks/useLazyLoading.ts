@@ -166,8 +166,8 @@ export function useDebouncedLazySearch<T>(
   const [hasMore, setHasMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const debounceTimeoutRef = useRef<NodeJS.Timeout>();
-  const searchAbortControllerRef = useRef<AbortController>();
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const searchAbortControllerRef = useRef<AbortController | null>(null);
 
   // Debounce the search query
   useEffect(() => {

@@ -141,8 +141,8 @@ func GetUserFromContext(ctx context.Context) (*database.User, bool) {
 // contentTypeMiddleware ensures proper content-type headers are set
 func (s *Server) contentTypeMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Set default content-type for API responses
-		if w.Header().Get("Content-Type") == "" {
+		// Only set default content-type for API responses, not static files
+		if strings.HasPrefix(r.URL.Path, "/api/") && w.Header().Get("Content-Type") == "" {
 			w.Header().Set("Content-Type", "application/json")
 		}
 

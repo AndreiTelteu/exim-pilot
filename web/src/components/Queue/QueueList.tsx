@@ -244,7 +244,10 @@ export default function QueueList({
               </div>
               <div className="mt-4">
                 <button
-                  onClick={() => lazyLoading.reset().then(() => lazyLoading.loadMore())}
+                  onClick={() => {
+                    lazyLoading.reset();
+                    lazyLoading.loadMore();
+                  }}
                   className="bg-red-100 px-3 py-2 rounded-md text-sm font-medium text-red-800 hover:bg-red-200"
                 >
                   Try again

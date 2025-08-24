@@ -7,16 +7,18 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/andreitelteu/exim-pilot/internal/database"
+	"github.com/andreitelteu/exim-pilot/internal/parser"
 )
 
 // StreamingProcessor handles efficient log processing with streaming
 type StreamingProcessor struct {
 	repository *database.Repository
-	parser     *LogParser
+	parser     *parser.EximParser
 	config     StreamingConfig
 	mu         sync.RWMutex
 	stats      ProcessingStats
@@ -52,7 +54,7 @@ func DefaultStreamingConfig() StreamingConfig {
 func NewStreamingProcessor(repository *database.Repository, config StreamingConfig) *StreamingProcessor {
 	return &StreamingProcessor{
 		repository: repository,
-		parser:     NewLogParser(),
+		parser:     parser.NewEximParser(),
 		config:     config,
 		stats:      ProcessingStats{StartTime: time.Now()},
 	}
@@ -71,6 +73,13 @@ func (sp *StreamingProcessor) ProcessLogFileStreaming(ctx context.Context, fileP
 
 // ProcessReaderStreaming processes log entries from a reader using streaming approach
 func (sp *StreamingProcessor) ProcessReaderStreaming(ctx context.Context, reader io.Reader, source string) error {
+	// Determine log type from source path
+	logType := "main" // default
+	if strings.Contains(source, "reject") {
+		logType = "reject"
+	} else if strings.Contains(source, "panic") {
+		logType = "panic"
+	}
 	sp.mu.Lock()
 	sp.stats.FilesProcessed++
 	sp.stats.CurrentFile = source
@@ -122,7 +131,7 @@ func (sp *StreamingProcessor) ProcessReaderStreaming(ctx context.Context, reader
 				case <-ctx.Done():
 					return
 				default:
-					if entry := sp.parseLine(line); entry != nil {
+					if entry := sp.parseLine(line, logType); entry != nil {
 						select {
 						case entriesChan <- entry:
 							sp.incrementLinesParsed()
@@ -297,8 +306,8 @@ func (sp *StreamingProcessor) processBatch(ctx context.Context, entries []*datab
 }
 
 // parseLine parses a single log line
-func (sp *StreamingProcessor) parseLine(line string) *database.LogEntry {
-	entry, err := sp.parser.ParseLogLine(line)
+func (sp *StreamingProcessor) parseLine(line, logType string) *database.LogEntry {
+	entry, err := sp.parser.ParseLogLine(line, logType)
 	if err != nil {
 		// Log parsing errors at debug level to avoid spam
 		return nil

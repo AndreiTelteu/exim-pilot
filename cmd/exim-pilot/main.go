@@ -14,10 +14,12 @@ import (
 	"github.com/andreitelteu/exim-pilot/internal/database"
 	"github.com/andreitelteu/exim-pilot/internal/logprocessor"
 	"github.com/andreitelteu/exim-pilot/internal/queue"
+	"github.com/andreitelteu/exim-pilot/web"
 )
 
 func main() {
 	fmt.Println("Exim Control Panel starting...")
+	web.InitEmbeddedAssets()
 
 	// Initialize database
 	dbConfig := database.DefaultConfig()

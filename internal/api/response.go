@@ -84,3 +84,8 @@ func WriteUnauthorizedResponse(w http.ResponseWriter, message string) {
 func WriteForbiddenResponse(w http.ResponseWriter, message string) {
 	WriteErrorResponse(w, http.StatusForbidden, message)
 }
+
+// WriteMethodNotAllowedResponse writes a 405 Method Not Allowed response
+func WriteMethodNotAllowedResponse(w http.ResponseWriter, message string) {
+	WriteErrorResponse(w, http.StatusMethodNotAllowed, message)
+}

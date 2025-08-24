@@ -50,7 +50,7 @@ export default function PerformanceMonitor() {
       
       const response = await apiService.get('/v1/performance/metrics');
       if (response.success) {
-        setMetrics(response.data);
+        setMetrics(response.data as PerformanceMetrics);
       } else {
         setError(response.error || 'Failed to fetch performance metrics');
       }
@@ -88,7 +88,7 @@ export default function PerformanceMonitor() {
       if (response.success) {
         // Refresh metrics after cleanup
         await fetchMetrics();
-        const result = response.data;
+        const result = response.data as { total_rows_deleted: number; duration: string };
         alert(`Data cleanup completed: ${result.total_rows_deleted} rows deleted in ${result.duration}`);
       } else {
         alert('Data cleanup failed: ' + (response.error || 'Unknown error'));

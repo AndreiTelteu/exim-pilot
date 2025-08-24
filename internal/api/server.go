@@ -10,6 +10,7 @@ import (
 	"github.com/andreitelteu/exim-pilot/internal/database"
 	"github.com/andreitelteu/exim-pilot/internal/logprocessor"
 	"github.com/andreitelteu/exim-pilot/internal/queue"
+	"github.com/andreitelteu/exim-pilot/internal/static"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
@@ -223,6 +224,19 @@ func (s *Server) setupRoutes() {
 
 	// Performance testing
 	protected.HandleFunc("/performance/test", performanceHandlers.handlePerformanceTest).Methods("POST")
+
+	// Setup static file serving for embedded frontend
+	s.setupStaticRoutes()
+}
+
+// setupStaticRoutes configures static file serving for the embedded frontend
+func (s *Server) setupStaticRoutes() {
+	// Create static handler for embedded files
+	staticHandler := static.NewHandler()
+
+	// Serve static files for all non-API routes
+	// This should be the last route to catch all unmatched paths
+	s.router.PathPrefix("/").Handler(staticHandler)
 }
 
 // Start starts the HTTP server
