@@ -9,7 +9,13 @@ class WebSocketService {
   private eventHandlers: Map<string, WebSocketEventHandler[]> = new Map();
   private subscriptions: Map<string, WebSocketEventHandler[]> = new Map();
 
-  constructor(url: string = 'ws://localhost:8080/ws') {
+  constructor(url: string|null = null) {
+    if (url === null) {
+      const currentUrl = new URL(location.href);
+      currentUrl.protocol = currentUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+      currentUrl.pathname = '/ws';
+      url = currentUrl.toString();
+    }
     this.url = url;
   }
 
