@@ -1,7 +1,7 @@
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AppProvider } from './context/AppContext';
+import { AppProvider, useApp } from './context/AppContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ErrorBoundary, Layout } from './components/Common';
 import { Login } from './components/Auth';
@@ -17,19 +17,52 @@ import { MessageTrace } from './components/MessageTrace';
 
 function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
+  const { actions } = useApp();
+  const connectionInitialized = useRef(false);
+  const hasShownDisconnectedNotification = useRef(false);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    console.log('AppContent useEffect triggered', { isAuthenticated, connectionInitialized: connectionInitialized.current });
+    
+    if (isAuthenticated && !connectionInitialized.current) {
+      connectionInitialized.current = true;
+      
+      // Set up connection status callback
+      webSocketService.setConnectionStatusCallback((status) => {
+        console.log('WebSocket status changed to:', status);
+        actions.setConnectionStatus(status);
+        if (status === 'disconnected' && !hasShownDisconnectedNotification.current) {
+          hasShownDisconnectedNotification.current = true;
+          actions.addNotification({
+            type: 'warning',
+            message: 'Real-time updates unavailable. Data will refresh periodically.'
+          });
+        } else if (status === 'connected') {
+          hasShownDisconnectedNotification.current = false;
+        }
+      });
+
       // Initialize WebSocket connection only when authenticated
+      console.log('Attempting to connect WebSocket...');
       webSocketService.connect().catch(error => {
         console.error('Failed to connect to WebSocket:', error);
       });
 
       return () => {
+        console.log('AppContent cleanup - disconnecting WebSocket');
+        connectionInitialized.current = false;
+        webSocketService.setConnectionStatusCallback(null);
         webSocketService.disconnect();
       };
+    } else if (!isAuthenticated && connectionInitialized.current) {
+      // Clear connection when not authenticated
+      console.log('User not authenticated - clearing WebSocket connection');
+      connectionInitialized.current = false;
+      webSocketService.setConnectionStatusCallback(null);
+      webSocketService.disconnect();
+      actions.setConnectionStatus('disconnected');
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated]); // Only depend on isAuthenticated
 
   if (isLoading) {
     return (

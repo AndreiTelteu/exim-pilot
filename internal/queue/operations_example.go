@@ -52,9 +52,9 @@ func ExampleQueueOperations() {
 		if err != nil {
 			log.Printf("Failed to get message details: %v", err)
 		} else {
-			fmt.Printf("Message size: %d bytes\n", details.Size)
-			fmt.Printf("Sender: %s\n", details.Sender)
-			fmt.Printf("Recipients: %v\n", details.Recipients)
+			fmt.Printf("Message size: %d bytes\n", details.Envelope.Size)
+			fmt.Printf("Sender: %s\n", details.Envelope.Sender)
+			fmt.Printf("Recipients: %v\n", details.Envelope.Recipients)
 		}
 
 		// Freeze the message

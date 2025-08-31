@@ -4,7 +4,6 @@ import { LoadingSpinner } from '@/components/Common';
 import { MetricsCard } from './MetricsCard';
 import { WeeklyChart } from './WeeklyChart';
 import { useDashboard } from '@/hooks/useDashboard';
-import { webSocketService } from '@/services/websocket';
 import { HelpTooltip, HelpSection } from '../Common/HelpTooltip';
 import { getHelpContent } from '../../utils/helpContent';
 
@@ -19,23 +18,7 @@ export default function Dashboard() {
   const { state, actions } = useApp();
   const { metrics, weeklyData, loading, error, refreshData } = useDashboard();
 
-  useEffect(() => {
-    // Connect to WebSocket for real-time updates
-    if (!webSocketService.isConnected()) {
-      webSocketService.connect()
-        .then(() => {
-          actions.setConnectionStatus('connected');
-        })
-        .catch((error) => {
-          console.error('Failed to connect to WebSocket:', error);
-          actions.setConnectionStatus('disconnected');
-          actions.addNotification({
-            type: 'warning',
-            message: 'Real-time updates unavailable. Data will refresh periodically.'
-          });
-        });
-    }
-  }, [actions]);
+  // Note: WebSocket connection is now handled globally in App.tsx
 
   if (loading && !metrics) {
     return <LoadingSpinner size="lg" className="py-12" />;

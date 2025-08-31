@@ -49,13 +49,47 @@ type Manager struct {
 	securityService *security.Service
 }
 
+// MessageEnvelope represents envelope information for a message
+type MessageEnvelope struct {
+	Sender      string    `json:"sender"`
+	Recipients  []string  `json:"recipients"`
+	ReceivedAt  time.Time `json:"received_at"`
+	Size        int64     `json:"size"`
+}
+
 // MessageDetails represents detailed information about a message
 type MessageDetails struct {
-	QueueMessage
-	Headers     map[string]string `json:"headers"`
-	Body        string            `json:"body"`
-	SMTPLog     []string          `json:"smtp_log"`
-	DeliveryLog []string          `json:"delivery_log"`
+	ID               string            `json:"id"`
+	Status           string            `json:"status"`
+	RetryCount       int               `json:"retry_count"`
+	LastAttempt      time.Time         `json:"last_attempt,omitempty"`
+	NextRetry        time.Time         `json:"next_retry,omitempty"`
+	Envelope         MessageEnvelope   `json:"envelope"`
+	Headers          map[string]string `json:"headers"`
+	ContentPreview   string            `json:"content_preview,omitempty"`
+	SMTPLogs         []SMTPLogEntry    `json:"smtp_logs"`
+	DeliveryAttempts []DeliveryAttempt `json:"delivery_attempts"`
+}
+
+// SMTPLogEntry represents an SMTP log entry
+type SMTPLogEntry struct {
+	Timestamp string `json:"timestamp"`
+	Event     string `json:"event"`
+	Host      string `json:"host,omitempty"`
+	IPAddress string `json:"ip_address,omitempty"`
+	Message   string `json:"message"`
+}
+
+// DeliveryAttempt represents a delivery attempt
+type DeliveryAttempt struct {
+	ID           int       `json:"id"`
+	Timestamp    time.Time `json:"timestamp"`
+	Recipient    string    `json:"recipient"`
+	Host         string    `json:"host,omitempty"`
+	IPAddress    string    `json:"ip_address,omitempty"`
+	Status       string    `json:"status"`
+	SMTPCode     string    `json:"smtp_code,omitempty"`
+	ErrorMessage string    `json:"error_message,omitempty"`
 }
 
 // NewManager creates a new queue manager
@@ -293,20 +327,70 @@ func (m *Manager) InspectMessage(messageID string) (*MessageDetails, error) {
 	headers := m.parseHeaders(string(headersOutput))
 
 	// Parse log entries
-	smtpLog, deliveryLog := m.parseMessageLog(string(logOutput))
+	smtpLog, _ := m.parseMessageLog(string(logOutput))
 
-	// Create basic queue message info
-	queueMsg := QueueMessage{
-		ID: messageID,
-		// Other fields would be populated from queue listing
+	// Get queue message info from current queue status
+	var queueMsg *QueueMessage
+	status, err := m.ListQueue()
+	if err == nil {
+		for _, msg := range status.Messages {
+			if msg.ID == messageID {
+				queueMsg = &msg
+				break
+			}
+		}
 	}
 
+	// Create envelope from queue message or headers
+	envelope := MessageEnvelope{
+		ReceivedAt: time.Now(), // Default to now if not available
+		Size:       int64(len(bodyOutput)),
+	}
+
+	if queueMsg != nil {
+		envelope.Sender = queueMsg.Sender
+		envelope.Recipients = queueMsg.Recipients
+		envelope.Size = queueMsg.Size
+	} else {
+		// Populate from headers if not found in queue
+		if headers["From"] != "" {
+			envelope.Sender = headers["From"]
+		}
+		if headers["To"] != "" {
+			envelope.Recipients = []string{headers["To"]}
+		}
+	}
+
+	// Convert string logs to structured logs (simplified)
+	var smtpLogs []SMTPLogEntry
+	for _, log := range smtpLog {
+		smtpLogs = append(smtpLogs, SMTPLogEntry{
+			Timestamp: time.Now().Format(time.RFC3339),
+			Event:     "smtp",
+			Message:   log,
+		})
+	}
+
+	// Create empty delivery attempts (would be populated from database in real implementation)
+	var deliveryAttempts []DeliveryAttempt
+
 	details := &MessageDetails{
-		QueueMessage: queueMsg,
-		Headers:      headers,
-		Body:         string(bodyOutput),
-		SMTPLog:      smtpLog,
-		DeliveryLog:  deliveryLog,
+		ID:               messageID,
+		Status:           "queued",
+		RetryCount:       0,
+		Envelope:         envelope,
+		Headers:          headers,
+		ContentPreview:   string(bodyOutput),
+		SMTPLogs:         smtpLogs,
+		DeliveryAttempts: deliveryAttempts,
+	}
+
+	// Set status and retry count from queue message if available
+	if queueMsg != nil {
+		details.Status = queueMsg.Status
+		details.RetryCount = queueMsg.RetryCount
+		details.LastAttempt = queueMsg.LastAttempt
+		details.NextRetry = queueMsg.NextRetry
 	}
 
 	return details, nil
