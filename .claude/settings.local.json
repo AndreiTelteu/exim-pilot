@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(./make:*)",
-      "Bash(./tmp/main.exe -config config/test-config.yaml)"
+      "Bash(./tmp/main.exe -config config/test-config.yaml)",
+      "Bash(curl:*)",
+      "Bash(./mock-exim.cmd:*)"
     ],
     "deny": [],
     "ask": []

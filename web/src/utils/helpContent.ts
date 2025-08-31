@@ -188,6 +188,16 @@ export const getHelpContent = (
 ): string => {
   const content = helpContent as any;
   if (subsection) {
+    // Handle nested properties with dot notation (e.g., 'status.queued')
+    if (subsection.includes('.')) {
+      const parts = subsection.split('.');
+      let value = content[section];
+      for (const part of parts) {
+        value = value?.[part];
+        if (!value) break;
+      }
+      return value || "Help content not available.";
+    }
     return content[section]?.[subsection] || "Help content not available.";
   }
   return (

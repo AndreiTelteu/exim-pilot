@@ -70,9 +70,19 @@ func NewManager(eximPath string, db *database.DB) *Manager {
 	}
 }
 
+// createCommand creates an exec.Cmd for the Exim binary, handling Windows batch files
+func (m *Manager) createCommand(args ...string) *exec.Cmd {
+	// Handle Windows batch files
+	if strings.HasSuffix(m.eximPath, ".cmd") || strings.HasSuffix(m.eximPath, ".bat") {
+		cmdArgs := append([]string{"/c", m.eximPath}, args...)
+		return exec.Command("cmd", cmdArgs...)
+	}
+	return exec.Command(m.eximPath, args...)
+}
+
 // ListQueue retrieves the current queue status using exim -bp
 func (m *Manager) ListQueue() (*QueueStatus, error) {
-	cmd := exec.Command(m.eximPath, "-bp")
+	cmd := m.createCommand("-bp")
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute exim -bp: %w", err)
@@ -258,21 +268,21 @@ func (m *Manager) parseAge(ageStr string) time.Duration {
 // InspectMessage retrieves detailed information about a specific message
 func (m *Manager) InspectMessage(messageID string) (*MessageDetails, error) {
 	// Get message headers using exim -Mvh
-	headersCmd := exec.Command(m.eximPath, "-Mvh", messageID)
+	headersCmd := m.createCommand("-Mvh", messageID)
 	headersOutput, err := headersCmd.Output()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get message headers: %w", err)
 	}
 
 	// Get message body using exim -Mvb
-	bodyCmd := exec.Command(m.eximPath, "-Mvb", messageID)
+	bodyCmd := m.createCommand("-Mvb", messageID)
 	bodyOutput, err := bodyCmd.Output()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get message body: %w", err)
 	}
 
 	// Get message log using exim -Mvl
-	logCmd := exec.Command(m.eximPath, "-Mvl", messageID)
+	logCmd := m.createCommand("-Mvl", messageID)
 	logOutput, err := logCmd.Output()
 	if err != nil {
 		// Log might not exist for new messages, continue without error

@@ -60,7 +60,7 @@ func (m *Manager) DeliverNow(messageID string, userID string, ipAddress string) 
 		fmt.Sprintf("deliver_now messageID=%s userID=%s ip=%s", messageID, userID, ipAddress))
 
 	// Execute exim -M command
-	cmd := exec.Command(m.eximPath, "-M", messageID)
+	cmd := m.createCommand("-M", messageID)
 	output, err := cmd.CombinedOutput()
 
 	if err != nil {

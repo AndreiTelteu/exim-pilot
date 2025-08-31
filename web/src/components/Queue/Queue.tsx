@@ -103,7 +103,7 @@ export default function Queue() {
             <div>
               <h4 className="font-semibold text-gray-800 mb-2">Message Status Types</h4>
               <ul className="space-y-2 text-sm text-gray-700">
-                <li><strong>Queued:</strong> {getHelpContent('queue', 'status').split('.')[0]}</li>
+                <li><strong>Queued:</strong> {getHelpContent('queue', 'status.queued')}</li>
                 <li><strong>Deferred:</strong> Messages that failed delivery temporarily and are scheduled for retry</li>
                 <li><strong>Frozen:</strong> Messages that have been paused and won't be retried until manually thawed</li>
               </ul>
@@ -111,7 +111,7 @@ export default function Queue() {
             <div>
               <h4 className="font-semibold text-gray-800 mb-2">Available Operations</h4>
               <ul className="space-y-2 text-sm text-gray-700">
-                <li><strong>Deliver Now:</strong> {getHelpContent('queue', 'operations').split('deliver:')[1]?.split('freeze:')[0]?.trim()}</li>
+                <li><strong>Deliver Now:</strong> {getHelpContent('queue', 'operations.deliver')}</li>
                 <li><strong>Freeze:</strong> Pause the message to prevent further delivery attempts</li>
                 <li><strong>Thaw:</strong> Resume a frozen message and return it to normal retry scheduling</li>
                 <li><strong>Delete:</strong> Permanently remove the message from the queue (cannot be undone)</li>

@@ -53,11 +53,11 @@ export default function QueueList({
       ...searchFilters,
     };
 
-    const response: APIResponse<QueueMessage[]> = await apiService.get('/v1/queue', params);
+    const response: APIResponse<any> = await apiService.get('/v1/queue', params);
     
     if (response.success && response.data) {
       return {
-        data: response.data,
+        data: response.data.messages || [],
         total: response.meta?.total || 0,
         hasMore: (response.meta?.page || 1) < (response.meta?.total_pages || 1),
       };
@@ -93,7 +93,7 @@ export default function QueueList({
     } finally {
       setLoading(false);
     }
-  }, [currentPage, fetchMessagesPage, useVirtualization, lazyLoading, itemsPerPage]);
+  }, [currentPage, fetchMessagesPage, useVirtualization, itemsPerPage]);
 
   // Handle real-time updates via WebSocket
   useEffect(() => {

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/andreitelteu/exim-pilot/internal/database"
@@ -125,6 +127,7 @@ type SearchCriteria struct {
 	Recipient  string `json:"recipient"`
 	MessageID  string `json:"message_id"`
 	Status     string `json:"status"`
+	Subject    string `json:"subject"`
 	MinAge     string `json:"min_age"`
 	MaxAge     string `json:"max_age"`
 	MinSize    int64  `json:"min_size"`
@@ -176,19 +179,129 @@ func (s *Service) matchesCriteria(msg *QueueMessage, criteria *SearchCriteria) b
 		return false
 	}
 
-	// Age filtering would require parsing age strings and comparing durations
-	// This is a simplified implementation
+	// Subject filtering - requires getting message details
+	if criteria.Subject != "" {
+		details, err := s.manager.InspectMessage(msg.ID)
+		if err != nil {
+			// If we can't get details, skip subject filtering for this message
+			log.Printf("Failed to get message details for subject filtering: %v", err)
+		} else {
+			subject := details.Headers["Subject"]
+			if !contains(subject, criteria.Subject) {
+				return false
+			}
+		}
+	}
+
+	// Age filtering - parse age strings and compare durations
+	if criteria.MinAge != "" || criteria.MaxAge != "" {
+		msgAge := s.parseAge(msg.Age)
+		
+		if criteria.MinAge != "" {
+			minAge := s.parseDurationString(criteria.MinAge)
+			if minAge > 0 && msgAge < minAge {
+				return false
+			}
+		}
+		
+		if criteria.MaxAge != "" {
+			maxAge := s.parseDurationString(criteria.MaxAge)
+			if maxAge > 0 && msgAge > maxAge {
+				return false
+			}
+		}
+	}
 
 	return true
 }
 
 // contains checks if a string contains a substring (case-insensitive)
 func contains(s, substr string) bool {
-	return len(substr) == 0 ||
-		len(s) >= len(substr) &&
-			(s == substr ||
-				fmt.Sprintf("%s", s) != fmt.Sprintf("%s", s) || // This is a placeholder for case-insensitive comparison
-				s == substr) // Simplified for now
+	if len(substr) == 0 {
+		return true
+	}
+	return strings.Contains(strings.ToLower(s), strings.ToLower(substr))
+}
+
+// parseAge converts age string from queue message to duration
+func (s *Service) parseAge(ageStr string) time.Duration {
+	ageStr = strings.TrimSpace(ageStr)
+	if ageStr == "" {
+		return 0
+	}
+
+	// Try parsing as Go duration first (e.g., "2h30m", "5m", "1h")
+	if duration, err := time.ParseDuration(ageStr); err == nil {
+		return duration
+	}
+
+	// Handle day format (e.g., "1d", "2d")
+	if strings.HasSuffix(ageStr, "d") {
+		dayStr := strings.TrimSuffix(ageStr, "d")
+		if days, err := strconv.Atoi(dayStr); err == nil {
+			return time.Duration(days) * 24 * time.Hour
+		}
+	}
+
+	// Handle other common formats
+	if strings.HasSuffix(ageStr, "h") {
+		hourStr := strings.TrimSuffix(ageStr, "h")
+		if hours, err := strconv.Atoi(hourStr); err == nil {
+			return time.Duration(hours) * time.Hour
+		}
+	}
+
+	if strings.HasSuffix(ageStr, "m") {
+		minStr := strings.TrimSuffix(ageStr, "m")
+		if mins, err := strconv.Atoi(minStr); err == nil {
+			return time.Duration(mins) * time.Minute
+		}
+	}
+
+	return 0
+}
+
+// parseDurationString converts user input duration string to time.Duration
+func (s *Service) parseDurationString(durationStr string) time.Duration {
+	durationStr = strings.TrimSpace(durationStr)
+	if durationStr == "" {
+		return 0
+	}
+
+	// Try parsing as Go duration first (e.g., "2h", "30m", "1h30m")
+	if duration, err := time.ParseDuration(durationStr); err == nil {
+		return duration
+	}
+
+	// Handle day format
+	if strings.HasSuffix(durationStr, "d") {
+		dayStr := strings.TrimSuffix(durationStr, "d")
+		if days, err := strconv.Atoi(dayStr); err == nil {
+			return time.Duration(days) * 24 * time.Hour
+		}
+	}
+
+	// Handle numeric values with units
+	if strings.HasSuffix(durationStr, "h") {
+		hourStr := strings.TrimSuffix(durationStr, "h")
+		if hours, err := strconv.Atoi(hourStr); err == nil {
+			return time.Duration(hours) * time.Hour
+		}
+	}
+
+	if strings.HasSuffix(durationStr, "m") {
+		minStr := strings.TrimSuffix(durationStr, "m")
+		if mins, err := strconv.Atoi(minStr); err == nil {
+			return time.Duration(mins) * time.Minute
+		}
+	}
+
+	// Try parsing as plain number (assume minutes)
+	if mins, err := strconv.Atoi(durationStr); err == nil {
+		return time.Duration(mins) * time.Minute
+	}
+
+	return 0
 }
 
 // Queue Operations - delegate to manager

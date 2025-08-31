@@ -28,7 +28,7 @@ func NewQueueHandlers(queueService *queue.Service, wsService *websocket.Service)
 	}
 }
 
-// handleQueueList handles GET /api/v1/queue - List queue messages with pagination
+// handleQueueList handles GET /api/v1/queue - List queue messages with pagination and search
 func (h *QueueHandlers) handleQueueList(w http.ResponseWriter, r *http.Request) {
 	// Get pagination parameters
 	page, perPage, err := GetPaginationParams(r)
@@ -37,15 +37,40 @@ func (h *QueueHandlers) handleQueueList(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Get queue status
-	status, err := h.queueService.GetQueueStatus()
-	if err != nil {
-		WriteInternalErrorResponse(w, "Failed to retrieve queue status")
-		return
+	// Parse search criteria from query parameters
+	criteria := h.parseSearchCriteria(r)
+
+	var messages []queue.QueueMessage
+	var queueStatus *queue.QueueStatus
+
+	// Check if any search criteria are provided
+	if h.hasSearchCriteria(criteria) {
+		// Use search functionality
+		searchResults, err := h.queueService.SearchQueueMessages(criteria)
+		if err != nil {
+			WriteInternalErrorResponse(w, "Failed to search queue messages")
+			return
+		}
+		messages = searchResults
+
+		// Get basic queue stats for metadata
+		queueStatus, err = h.queueService.GetQueueStatus()
+		if err != nil {
+			WriteInternalErrorResponse(w, "Failed to retrieve queue status")
+			return
+		}
+	} else {
+		// Get all messages
+		queueStatus, err = h.queueService.GetQueueStatus()
+		if err != nil {
+			WriteInternalErrorResponse(w, "Failed to retrieve queue status")
+			return
+		}
+		messages = queueStatus.Messages
 	}
 
 	// Apply pagination
-	total := len(status.Messages)
+	total := len(messages)
 	start := (page - 1) * perPage
 	end := start + perPage
 
@@ -56,15 +81,15 @@ func (h *QueueHandlers) handleQueueList(w http.ResponseWriter, r *http.Request) 
 		end = total
 	}
 
-	paginatedMessages := status.Messages[start:end]
+	paginatedMessages := messages[start:end]
 
 	// Create response with metadata
 	response := map[string]interface{}{
 		"messages":           paginatedMessages,
-		"total_messages":     status.TotalMessages,
-		"deferred_messages":  status.DeferredMessages,
-		"frozen_messages":    status.FrozenMessages,
-		"oldest_message_age": status.OldestMessageAge.String(),
+		"total_messages":     queueStatus.TotalMessages,
+		"deferred_messages":  queueStatus.DeferredMessages,
+		"frozen_messages":    queueStatus.FrozenMessages,
+		"oldest_message_age": queueStatus.OldestMessageAge.String(),
 	}
 
 	meta := CalculatePagination(page, perPage, total)
@@ -443,4 +468,60 @@ func (h *QueueHandlers) handleQueueHistory(w http.ResponseWriter, r *http.Reques
 		"message_id": messageID,
 		"history":    history,
 	})
+}
+
+// parseSearchCriteria extracts search criteria from query parameters
+func (h *QueueHandlers) parseSearchCriteria(r *http.Request) *queue.SearchCriteria {
+	criteria := &queue.SearchCriteria{}
+
+	// String parameters
+	criteria.Sender = GetQueryParam(r, "sender", "")
+	criteria.Recipient = GetQueryParam(r, "recipient", "")
+	criteria.MessageID = GetQueryParam(r, "message_id", "")
+	criteria.Status = GetQueryParam(r, "status", "")
+	criteria.Subject = GetQueryParam(r, "subject", "")
+	criteria.MinAge = GetQueryParam(r, "age_min", "")
+	criteria.MaxAge = GetQueryParam(r, "age_max", "")
+
+	// Integer parameters with error handling
+	if minSizeStr := GetQueryParam(r, "size_min", ""); minSizeStr != "" {
+		if minSize, err := strconv.ParseInt(minSizeStr, 10, 64); err == nil {
+			criteria.MinSize = minSize
+		}
+	}
+
+	if maxSizeStr := GetQueryParam(r, "size_max", ""); maxSizeStr != "" {
+		if maxSize, err := strconv.ParseInt(maxSizeStr, 10, 64); err == nil {
+			criteria.MaxSize = maxSize
+		}
+	}
+
+	if minRetriesStr := GetQueryParam(r, "retry_count_min", ""); minRetriesStr != "" {
+		if minRetries, err := strconv.Atoi(minRetriesStr); err == nil {
+			criteria.MinRetries = minRetries
+		}
+	}
+
+	if maxRetriesStr := GetQueryParam(r, "retry_count_max", ""); maxRetriesStr != "" {
+		if maxRetries, err := strconv.Atoi(maxRetriesStr); err == nil {
+			criteria.MaxRetries = maxRetries
+		}
+	}
+
+	return criteria
+}
+
+// hasSearchCriteria checks if any search criteria are provided
+func (h *QueueHandlers) hasSearchCriteria(criteria *queue.SearchCriteria) bool {
+	return criteria.Sender != "" ||
+		criteria.Recipient != "" ||
+		criteria.MessageID != "" ||
+		criteria.Status != "" ||
+		criteria.Subject != "" ||
+		criteria.MinAge != "" ||
+		criteria.MaxAge != "" ||
+		criteria.MinSize > 0 ||
+		criteria.MaxSize > 0 ||
+		criteria.MinRetries > 0 ||
+		criteria.MaxRetries > 0
 }
