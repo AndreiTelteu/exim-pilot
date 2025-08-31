@@ -219,14 +219,6 @@ export default function VolumeReport() {
     document.body.removeChild(link);
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-md p-4">
@@ -281,154 +273,165 @@ export default function VolumeReport() {
           </div>
         </div>
       </div>
-
-      {/* Summary Metrics */}
-      {volumeData && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
+      
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <LoadingSpinner />
+        </div>
+      ) : (
+        <>
+          
+          {/* Summary Metrics */}
+          {volumeData && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-white p-6 rounded-lg shadow-sm border">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <div className="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center">
+                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-500">Total Volume</p>
+                    <p className="text-2xl font-semibold text-blue-600">{formatNumber(volumeData.total_volume)}</p>
+                  </div>
                 </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Total Volume</p>
-                <p className="text-2xl font-semibold text-blue-600">{formatNumber(volumeData.total_volume)}</p>
+
+              <div className="bg-white p-6 rounded-lg shadow-sm border">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <div className="w-8 h-8 bg-green-100 rounded-md flex items-center justify-center">
+                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-500">Average Volume</p>
+                    <p className="text-2xl font-semibold text-green-600">{formatNumber(Math.round(volumeData.average_volume))}</p>
+                    <p className="text-xs text-gray-500">per {groupBy}</p>
+                  </div>
+                </div>
               </div>
+
+              <div className="bg-white p-6 rounded-lg shadow-sm border">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <div className="w-8 h-8 bg-orange-100 rounded-md flex items-center justify-center">
+                      <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-500">Peak Volume</p>
+                    <p className="text-2xl font-semibold text-orange-600">{formatNumber(volumeData.peak_volume)}</p>
+                    <p className="text-xs text-gray-500">highest {groupBy}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Charts */}
+          <div className="space-y-6">
+            {/* Volume Trend Chart */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <ReactECharts option={getVolumeTrendChart()} style={{ height: '400px' }} />
+            </div>
+
+            {/* Volume Distribution Chart */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <ReactECharts option={getVolumeDistributionChart()} style={{ height: '400px' }} />
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-green-100 rounded-md flex items-center justify-center">
-                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                  </svg>
-                </div>
+          {/* Data Table */}
+          {volumeData?.time_series && (
+            <div className="bg-white rounded-lg shadow-sm border">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-medium text-gray-900">Volume Data</h3>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Average Volume</p>
-                <p className="text-2xl font-semibold text-green-600">{formatNumber(Math.round(volumeData.average_volume))}</p>
-                <p className="text-xs text-gray-500">per {groupBy}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-orange-100 rounded-md flex items-center justify-center">
-                  <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                  </svg>
-                </div>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Peak Volume</p>
-                <p className="text-2xl font-semibold text-orange-600">{formatNumber(volumeData.peak_volume)}</p>
-                <p className="text-xs text-gray-500">highest {groupBy}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Charts */}
-      <div className="space-y-6">
-        {/* Volume Trend Chart */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <ReactECharts option={getVolumeTrendChart()} style={{ height: '400px' }} />
-        </div>
-
-        {/* Volume Distribution Chart */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <ReactECharts option={getVolumeDistributionChart()} style={{ height: '400px' }} />
-        </div>
-      </div>
-
-      {/* Data Table */}
-      {volumeData?.time_series && (
-        <div className="bg-white rounded-lg shadow-sm border">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Volume Data</h3>
-          </div>
-          <div className="overflow-x-auto max-h-96">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50 sticky top-0">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {groupBy === 'hour' ? 'Date & Hour' : 
-                     groupBy === 'day' ? 'Date' :
-                     groupBy === 'week' ? 'Week' : 'Month'}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Message Count
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Percentage of Total
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {volumeData.time_series.map((point, index) => {
-                  const date = new Date(point.timestamp);
-                  const percentage = (point.count / volumeData.total_volume) * 100;
-                  
-                  return (
-                    <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {groupBy === 'hour' 
-                          ? date.toLocaleString('en-US', { 
-                              month: 'short', 
-                              day: 'numeric', 
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })
-                          : groupBy === 'day'
-                          ? date.toLocaleDateString('en-US', { 
-                              weekday: 'short',
-                              month: 'short', 
-                              day: 'numeric',
-                              year: 'numeric'
-                            })
-                          : date.toLocaleDateString('en-US', { 
-                              month: 'short', 
-                              year: 'numeric' 
-                            })
-                        }
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatNumber(point.count)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <div className="flex items-center">
-                          <div className="flex-1">
-                            <div className="flex items-center">
-                              <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
-                                <div 
-                                  className="bg-blue-600 h-2 rounded-full" 
-                                  style={{ width: `${Math.min(percentage, 100)}%` }}
-                                ></div>
-                              </div>
-                              <span className="text-sm text-gray-600">
-                                {percentage.toFixed(1)}%
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </td>
+              <div className="overflow-x-auto max-h-96">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50 sticky top-0">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {groupBy === 'hour' ? 'Date & Hour' : 
+                        groupBy === 'day' ? 'Date' :
+                        groupBy === 'week' ? 'Week' : 'Month'}
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Message Count
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Percentage of Total
+                      </th>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {volumeData.time_series.map((point, index) => {
+                      const date = new Date(point.timestamp);
+                      const percentage = (point.count / volumeData.total_volume) * 100;
+                      
+                      return (
+                        <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {groupBy === 'hour' 
+                              ? date.toLocaleString('en-US', { 
+                                  month: 'short', 
+                                  day: 'numeric', 
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })
+                              : groupBy === 'day'
+                              ? date.toLocaleDateString('en-US', { 
+                                  weekday: 'short',
+                                  month: 'short', 
+                                  day: 'numeric',
+                                  year: 'numeric'
+                                })
+                              : date.toLocaleDateString('en-US', { 
+                                  month: 'short', 
+                                  year: 'numeric' 
+                                })
+                            }
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {formatNumber(point.count)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <div className="flex items-center">
+                              <div className="flex-1">
+                                <div className="flex items-center">
+                                  <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                                    <div 
+                                      className="bg-blue-600 h-2 rounded-full" 
+                                      style={{ width: `${Math.min(percentage, 100)}%` }}
+                                    ></div>
+                                  </div>
+                                  <span className="text-sm text-gray-600">
+                                    {percentage.toFixed(1)}%
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+          
+        </>
       )}
+
     </div>
   );
 }
