@@ -130,6 +130,16 @@ func main() {
 	// Initialize API server
 	server := api.NewServer(apiConfig, queueService, logService, repository, db)
 
+	// Set up WebSocket callback for log entries
+	logService.SetLogEntryCallback(func(entry *database.LogEntry) {
+		if wsService := server.GetWebSocketService(); wsService != nil {
+			wsService.BroadcastLogEntry(entry)
+		}
+	})
+
+	// Wait for interrupt signal to gracefully shutdown
+	quit := make(chan os.Signal, 1)
+
 	// Start server in a goroutine
 	go func() {
 		if err := server.Start(); err != nil {
@@ -137,8 +147,28 @@ func main() {
 		}
 	}()
 
-	// Wait for interrupt signal to gracefully shutdown
-	quit := make(chan os.Signal, 1)
+	// Start periodic dashboard updates
+	go func() {
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				// Broadcast dashboard updates to WebSocket clients
+				if wsService := server.GetWebSocketService(); wsService != nil && wsService.IsRunning() {
+					// Get dashboard metrics and broadcast them
+					// This is a simplified version - in a real implementation you'd get actual metrics
+					wsService.BroadcastDashboardUpdate(map[string]interface{}{
+						"timestamp": time.Now().UTC(),
+						"type":      "periodic_update",
+					})
+				}
+			case <-quit:
+				return
+			}
+		}
+	}()
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 

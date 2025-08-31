@@ -24,7 +24,7 @@ exim:
         - data/test-rejectlog
         - data/test-paniclog
     spool_dir: data/test-spool
-    binary_path: bin/exim-pilot.exe
+    binary_path: ./mock-exim
     config_file: config/test-config.yaml
     queue_run_user: test-user
     log_rotation_dir: data

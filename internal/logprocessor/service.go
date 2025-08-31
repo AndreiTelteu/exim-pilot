@@ -10,6 +10,9 @@ import (
 	"github.com/andreitelteu/exim-pilot/internal/database"
 )
 
+// LogEntryCallback is called when a new log entry is processed
+type LogEntryCallback func(entry *database.LogEntry)
+
 // Service provides comprehensive log processing functionality
 type Service struct {
 	repository        *database.Repository
@@ -17,6 +20,7 @@ type Service struct {
 	backgroundService *BackgroundService
 	searchService     *SearchService
 	config            ServiceConfig
+	logEntryCallback  LogEntryCallback
 	mu                sync.RWMutex
 }
 
@@ -66,6 +70,13 @@ func NewService(repository *database.Repository, config ServiceConfig) *Service 
 	return service
 }
 
+// SetLogEntryCallback sets the callback function for new log entries
+func (s *Service) SetLogEntryCallback(callback LogEntryCallback) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.logEntryCallback = callback
+}
+
 // Start starts the log processing service
 func (s *Service) Start() error {
 	s.mu.Lock()
@@ -105,6 +116,15 @@ func (s *Service) ProcessLogEntry(ctx context.Context, entry *database.LogEntry)
 	// Store the log entry
 	if err := s.repository.CreateLogEntry(ctx, entry); err != nil {
 		return fmt.Errorf("failed to store log entry: %w", err)
+	}
+
+	// Call the callback if set (for WebSocket broadcasting)
+	s.mu.RLock()
+	callback := s.logEntryCallback
+	s.mu.RUnlock()
+
+	if callback != nil {
+		go callback(entry)
 	}
 
 	// If correlation is enabled and entry has a message ID, trigger correlation

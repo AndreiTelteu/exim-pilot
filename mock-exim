@@ -1,0 +1,4 @@
+#!/bin/bash
+# Mock Exim binary for testing
+echo "Mock Exim 4.96"
+exit 0

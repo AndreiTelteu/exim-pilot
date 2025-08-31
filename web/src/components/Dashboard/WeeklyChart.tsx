@@ -217,10 +217,10 @@ export function WeeklyChart({ data, loading = false }: WeeklyChartProps) {
 
   // Calculate totals for the period
   const totals = {
-    delivered: data.delivered.reduce((sum, val) => sum + val, 0),
-    failed: data.failed.reduce((sum, val) => sum + val, 0),
-    pending: data.pending.reduce((sum, val) => sum + val, 0),
-    deferred: data.deferred.reduce((sum, val) => sum + val, 0)
+    delivered: (data as any)?.summary?.delivered_messages,
+    failed: (data as any)?.summary?.rejected_messages,
+    pending: 0,
+    deferred: (data as any)?.summary?.deferred_messages,
   };
   
   const grandTotal = totals.delivered + totals.failed + totals.pending + totals.deferred;

@@ -136,7 +136,7 @@ elif [ $1 == "start" ]; then
         exit 1
     fi
     echo "Starting production binary..."
-    start ./bin/exim-pilot.exe
+    ./bin/exim-pilot.exe -config config/test-config.yaml
 elif [ $1 == "test" ]; then
     go test ./...
 elif [ $1 == "clean" ]; then

@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./make:*)",
+      "Bash(./tmp/main.exe -config config/test-config.yaml)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

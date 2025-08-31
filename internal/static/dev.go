@@ -76,6 +76,9 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Build the full file path
 	filePath := filepath.Join(h.root, strings.TrimPrefix(upath, "/"))
 
+	// Log what we're trying to serve for debugging
+	//log.Printf("Static handler: Trying to open file: %s", strings.TrimPrefix(upath, "/"))
+
 	// Check if file exists
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		// If file not found and it's not an API route, serve index.html for SPA routing
@@ -86,6 +89,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		} else {
+			// For API routes, return 404 immediately without trying to serve a file
 			http.NotFound(w, r)
 			return
 		}

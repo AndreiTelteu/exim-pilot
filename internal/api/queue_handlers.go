@@ -5,22 +5,26 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/andreitelteu/exim-pilot/internal/queue"
 	"github.com/andreitelteu/exim-pilot/internal/validation"
+	"github.com/andreitelteu/exim-pilot/internal/websocket"
 )
 
 // QueueHandlers contains handlers for queue management endpoints
 type QueueHandlers struct {
 	queueService      *queue.Service
 	validationService *validation.Service
+	wsService         *websocket.Service
 }
 
 // NewQueueHandlers creates a new queue handlers instance
-func NewQueueHandlers(queueService *queue.Service) *QueueHandlers {
+func NewQueueHandlers(queueService *queue.Service, wsService *websocket.Service) *QueueHandlers {
 	return &QueueHandlers{
 		queueService:      queueService,
 		validationService: validation.NewService(),
+		wsService:         wsService,
 	}
 }
 
@@ -168,6 +172,15 @@ func (h *QueueHandlers) handleQueueDeliver(w http.ResponseWriter, r *http.Reques
 	}
 
 	if result.Success {
+		// Broadcast queue update to WebSocket clients
+		if h.wsService != nil {
+			h.wsService.BroadcastQueueUpdate(map[string]interface{}{
+				"action":     "deliver",
+				"message_id": messageID,
+				"status":     "success",
+				"timestamp":  time.Now().UTC(),
+			})
+		}
 		WriteSuccessResponse(w, result)
 	} else {
 		WriteBadRequestResponse(w, result.Error)
@@ -192,6 +205,15 @@ func (h *QueueHandlers) handleQueueFreeze(w http.ResponseWriter, r *http.Request
 	}
 
 	if result.Success {
+		// Broadcast queue update to WebSocket clients
+		if h.wsService != nil {
+			h.wsService.BroadcastQueueUpdate(map[string]interface{}{
+				"action":     "freeze",
+				"message_id": messageID,
+				"status":     "success",
+				"timestamp":  time.Now().UTC(),
+			})
+		}
 		WriteSuccessResponse(w, result)
 	} else {
 		WriteBadRequestResponse(w, result.Error)
@@ -216,6 +238,15 @@ func (h *QueueHandlers) handleQueueThaw(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if result.Success {
+		// Broadcast queue update to WebSocket clients
+		if h.wsService != nil {
+			h.wsService.BroadcastQueueUpdate(map[string]interface{}{
+				"action":     "thaw",
+				"message_id": messageID,
+				"status":     "success",
+				"timestamp":  time.Now().UTC(),
+			})
+		}
 		WriteSuccessResponse(w, result)
 	} else {
 		WriteBadRequestResponse(w, result.Error)
@@ -240,6 +271,15 @@ func (h *QueueHandlers) handleQueueDelete(w http.ResponseWriter, r *http.Request
 	}
 
 	if result.Success {
+		// Broadcast queue update to WebSocket clients
+		if h.wsService != nil {
+			h.wsService.BroadcastQueueUpdate(map[string]interface{}{
+				"action":     "delete",
+				"message_id": messageID,
+				"status":     "success",
+				"timestamp":  time.Now().UTC(),
+			})
+		}
 		WriteSuccessResponse(w, result)
 	} else {
 		WriteBadRequestResponse(w, result.Error)
@@ -297,6 +337,17 @@ func (h *QueueHandlers) handleQueueBulk(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		WriteInternalErrorResponse(w, "Failed to perform bulk operation: "+err.Error())
 		return
+	}
+
+	// Broadcast queue update to WebSocket clients for bulk operations
+	if h.wsService != nil && result != nil {
+		h.wsService.BroadcastQueueUpdate(map[string]interface{}{
+			"action":      "bulk_" + bulkRequest.Operation,
+			"message_ids": bulkRequest.MessageIDs,
+			"status":      "completed",
+			"result":      result,
+			"timestamp":   time.Now().UTC(),
+		})
 	}
 
 	WriteSuccessResponse(w, result)

@@ -218,6 +218,35 @@ func (h *ReportsHandlers) handleTopRecipients(w http.ResponseWriter, r *http.Req
 	WriteSuccessResponse(w, topRecipients)
 }
 
+// handleWeeklyOverview handles GET /api/v1/reports/weekly-overview - Weekly overview data
+func (h *ReportsHandlers) handleWeeklyOverview(w http.ResponseWriter, r *http.Request) {
+	// Get time range (default to last 7 days)
+	endTime := time.Now()
+	startTime := endTime.Add(-7 * 24 * time.Hour)
+
+	// Parse custom time range if provided
+	if startTimeStr := GetQueryParam(r, "start_time", ""); startTimeStr != "" {
+		if parsedTime, err := time.Parse(time.RFC3339, startTimeStr); err == nil {
+			startTime = parsedTime
+		}
+	}
+
+	if endTimeStr := GetQueryParam(r, "end_time", ""); endTimeStr != "" {
+		if parsedTime, err := time.Parse(time.RFC3339, endTimeStr); err == nil {
+			endTime = parsedTime
+		}
+	}
+
+	// Generate weekly overview report
+	weeklyOverview, err := h.generateWeeklyOverviewReport(r.Context(), startTime, endTime)
+	if err != nil {
+		WriteInternalErrorResponse(w, "Failed to generate weekly overview report")
+		return
+	}
+
+	WriteSuccessResponse(w, weeklyOverview)
+}
+
 // handleDomainAnalysis handles GET /api/v1/reports/domains - Domain-based analysis
 func (h *ReportsHandlers) handleDomainAnalysis(w http.ResponseWriter, r *http.Request) {
 	// Get time range (default to last 7 days)
@@ -660,4 +689,78 @@ type DomainStat struct {
 	DeliveryRate float64 `json:"delivery_rate"`
 	BounceRate   float64 `json:"bounce_rate"`
 	DeferRate    float64 `json:"defer_rate"`
+}
+
+// WeeklyOverviewData represents weekly overview data for the dashboard
+type WeeklyOverviewData struct {
+	Period         Period         `json:"period"`
+	Summary        WeeklySummary  `json:"summary"`
+	DailyBreakdown []DailyStats   `json:"daily_breakdown"`
+	TopDomains     []DomainStat   `json:"top_domains"`
+	QueueStatus    QueueStatus    `json:"queue_status"`
+}
+
+type WeeklySummary struct {
+	TotalMessages     int     `json:"total_messages"`
+	DeliveredMessages int     `json:"delivered_messages"`
+	BouncedMessages   int     `json:"bounced_messages"`
+	DeferredMessages  int     `json:"deferred_messages"`
+	RejectedMessages  int     `json:"rejected_messages"`
+	DeliveryRate      float64 `json:"delivery_rate"`
+	BounceRate        float64 `json:"bounce_rate"`
+}
+
+type DailyStats struct {
+	Date              string `json:"date"`
+	TotalMessages     int    `json:"total_messages"`
+	DeliveredMessages int    `json:"delivered_messages"`
+	BouncedMessages   int    `json:"bounced_messages"`
+	DeferredMessages  int    `json:"deferred_messages"`
+	RejectedMessages  int    `json:"rejected_messages"`
+}
+
+type QueueStatus struct {
+	TotalInQueue   int       `json:"total_in_queue"`
+	FrozenMessages int       `json:"frozen_messages"`
+	OldestMessage  time.Time `json:"oldest_message,omitempty"`
+}
+
+// generateWeeklyOverviewReport generates weekly overview data for dashboard
+func (h *ReportsHandlers) generateWeeklyOverviewReport(ctx context.Context, startTime, endTime time.Time) (*WeeklyOverviewData, error) {
+	// This is a simplified weekly overview implementation
+	// In a real implementation, you would gather comprehensive metrics
+	overview := &WeeklyOverviewData{
+		Period: Period{Start: startTime, End: endTime},
+		Summary: WeeklySummary{
+			TotalMessages:     0,
+			DeliveredMessages: 0,
+			BouncedMessages:   0,
+			DeferredMessages:  0,
+			RejectedMessages:  0,
+			DeliveryRate:      0.0,
+			BounceRate:        0.0,
+		},
+		DailyBreakdown: make([]DailyStats, 0, 7),
+		TopDomains:     make([]DomainStat, 0),
+		QueueStatus: QueueStatus{
+			TotalInQueue:   0,
+			FrozenMessages: 0,
+			OldestMessage:  time.Time{},
+		},
+	}
+
+	// Fill the daily breakdown for the last 7 days
+	for i := 0; i < 7; i++ {
+		day := startTime.Add(time.Duration(i) * 24 * time.Hour)
+		overview.DailyBreakdown = append(overview.DailyBreakdown, DailyStats{
+			Date:              day.Format("2006-01-02"),
+			TotalMessages:     0,
+			DeliveredMessages: 0,
+			BouncedMessages:   0,
+			DeferredMessages:  0,
+			RejectedMessages:  0,
+		})
+	}
+
+	return overview, nil
 }

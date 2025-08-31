@@ -6,17 +6,20 @@ import (
 	"time"
 
 	"github.com/andreitelteu/exim-pilot/internal/logprocessor"
+	"github.com/andreitelteu/exim-pilot/internal/websocket"
 )
 
 // LogHandlers contains handlers for log and monitoring endpoints
 type LogHandlers struct {
 	logService *logprocessor.Service
+	wsService  *websocket.Service
 }
 
 // NewLogHandlers creates a new log handlers instance
-func NewLogHandlers(logService *logprocessor.Service) *LogHandlers {
+func NewLogHandlers(logService *logprocessor.Service, wsService *websocket.Service) *LogHandlers {
 	return &LogHandlers{
 		logService: logService,
+		wsService:  wsService,
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/andreitelteu/exim-pilot/internal/auth"
@@ -11,19 +12,21 @@ import (
 	"github.com/andreitelteu/exim-pilot/internal/logprocessor"
 	"github.com/andreitelteu/exim-pilot/internal/queue"
 	"github.com/andreitelteu/exim-pilot/internal/static"
+	"github.com/andreitelteu/exim-pilot/internal/websocket"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
 // Server represents the API server
 type Server struct {
-	router       *mux.Router
-	httpServer   *http.Server
-	config       *Config
-	queueService *queue.Service
-	logService   *logprocessor.Service
-	repository   *database.Repository
-	authService  *auth.Service
+	router           *mux.Router
+	httpServer       *http.Server
+	config           *Config
+	queueService     *queue.Service
+	logService       *logprocessor.Service
+	repository       *database.Repository
+	authService      *auth.Service
+	websocketService *websocket.Service
 }
 
 // NewServer creates a new API server instance
@@ -34,23 +37,24 @@ func NewServer(config *Config, queueService *queue.Service, logService *logproce
 	}
 
 	s := &Server{
-		router:       mux.NewRouter(),
-		config:       config,
-		queueService: queueService,
-		logService:   logService,
-		repository:   repository,
-		authService:  auth.NewService(db),
+		router:           mux.NewRouter(),
+		config:           config,
+		queueService:     queueService,
+		logService:       logService,
+		repository:       repository,
+		authService:      auth.NewService(db),
+		websocketService: websocket.NewService(),
 	}
 
-	s.setupMiddleware()
-	s.setupRoutes()
+	s.setupRoutes()     // Setup routes first
+	s.setupMiddleware() // Apply middleware after
 
 	return s
 }
 
 // setupMiddleware configures all middleware for the server
 func (s *Server) setupMiddleware() {
-	// CORS middleware for frontend integration
+	// Create CORS middleware for API routes only
 	corsHandler := handlers.CORS(
 		handlers.AllowedOrigins(s.config.AllowedOrigins),
 		handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}),
@@ -58,32 +62,27 @@ func (s *Server) setupMiddleware() {
 		handlers.AllowCredentials(),
 	)
 
-	// Apply CORS to all routes
-	s.router.Use(corsHandler)
+	// Apply middleware only to API routes, not WebSocket routes
+	apiRouter := s.router.PathPrefix("/api").Subrouter()
 
-	// Security headers middleware (first for all responses)
-	s.router.Use(s.securityHeadersMiddleware)
+	apiRouter.Use(corsHandler)
+	apiRouter.Use(s.securityHeadersMiddleware)
 
-	// Request logging middleware (if enabled)
 	if s.config.LogRequests {
-		s.router.Use(s.loggingMiddleware)
+		apiRouter.Use(s.loggingMiddleware)
 	}
 
-	// Error handling middleware
-	s.router.Use(s.errorHandlingMiddleware)
-
-	// Content-type middleware
-	s.router.Use(s.contentTypeMiddleware)
-
-	// Input validation middleware
-	s.router.Use(s.validationMiddleware)
-
-	// Audit logging middleware (after validation, before auth)
-	s.router.Use(s.auditMiddleware)
+	apiRouter.Use(s.errorHandlingMiddleware)
+	apiRouter.Use(s.contentTypeMiddleware)
+	apiRouter.Use(s.validationMiddleware)
+	apiRouter.Use(s.auditMiddleware)
 }
 
 // setupRoutes configures all API routes
 func (s *Server) setupRoutes() {
+	// WebSocket endpoint - registered directly without middleware
+	s.router.HandleFunc("/ws", s.handleWebSocket).Methods("GET")
+
 	// API v1 routes
 	api := s.router.PathPrefix("/api/v1").Subrouter()
 
@@ -104,7 +103,7 @@ func (s *Server) setupRoutes() {
 
 	// Queue management routes (Task 5.2) - Protected
 	if s.queueService != nil {
-		queueHandlers := NewQueueHandlers(s.queueService)
+		queueHandlers := NewQueueHandlers(s.queueService, s.websocketService)
 
 		// Queue listing and search
 		protected.HandleFunc("/queue", queueHandlers.handleQueueList).Methods("GET")
@@ -126,7 +125,7 @@ func (s *Server) setupRoutes() {
 
 	// Log and monitoring routes (Task 5.3) - Protected
 	if s.logService != nil {
-		logHandlers := NewLogHandlers(s.logService)
+		logHandlers := NewLogHandlers(s.logService, s.websocketService)
 
 		// Basic log endpoints
 		protected.HandleFunc("/logs", logHandlers.handleLogsList).Methods("GET")
@@ -164,6 +163,7 @@ func (s *Server) setupRoutes() {
 		protected.HandleFunc("/reports/top-senders", reportsHandlers.handleTopSenders).Methods("GET")
 		protected.HandleFunc("/reports/top-recipients", reportsHandlers.handleTopRecipients).Methods("GET")
 		protected.HandleFunc("/reports/domains", reportsHandlers.handleDomainAnalysis).Methods("GET")
+		protected.HandleFunc("/reports/weekly-overview", reportsHandlers.handleWeeklyOverview).Methods("GET")
 	}
 
 	// Enhanced Message Tracing routes (Task 11.1) - Protected
@@ -234,13 +234,25 @@ func (s *Server) setupStaticRoutes() {
 	// Create static handler for embedded files
 	staticHandler := static.NewHandler()
 
-	// Serve static files for all non-API routes
-	// This should be the last route to catch all unmatched paths
-	s.router.PathPrefix("/").Handler(staticHandler)
+	// Serve static files for all non-API, non-WebSocket routes
+	// Use NotFoundHandler to avoid conflicts with API routes
+	s.router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Only serve static files for non-API routes
+		if !strings.HasPrefix(r.URL.Path, "/api/") && !strings.HasPrefix(r.URL.Path, "/ws") {
+			staticHandler.ServeHTTP(w, r)
+		} else {
+			http.NotFound(w, r)
+		}
+	})
 }
 
 // Start starts the HTTP server
 func (s *Server) Start() error {
+	// Start WebSocket service
+	if err := s.websocketService.Start(); err != nil {
+		return err
+	}
+
 	s.httpServer = &http.Server{
 		Addr:         s.config.GetAddress(),
 		Handler:      s.router,
@@ -256,6 +268,12 @@ func (s *Server) Start() error {
 // Stop gracefully stops the HTTP server
 func (s *Server) Stop(ctx context.Context) error {
 	log.Println("Stopping API server...")
+
+	// Stop WebSocket service
+	if err := s.websocketService.Stop(); err != nil {
+		log.Printf("Error stopping WebSocket service: %v", err)
+	}
+
 	return s.httpServer.Shutdown(ctx)
 }
 
@@ -271,4 +289,33 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	}
 
 	WriteJSONResponse(w, http.StatusOK, response)
+}
+
+// handleWebSocket handles WebSocket connections with manual CORS handling
+func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
+	// Handle CORS for WebSocket connections manually
+	origin := r.Header.Get("Origin")
+	if origin != "" {
+		// Check if origin is allowed
+		allowed := false
+		for _, allowedOrigin := range s.config.AllowedOrigins {
+			if allowedOrigin == "*" || allowedOrigin == origin {
+				allowed = true
+				break
+			}
+		}
+
+		if allowed {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+		}
+	}
+
+	// Delegate to WebSocket service
+	s.websocketService.GetHub().ServeWS(w, r)
+}
+
+// GetWebSocketService returns the WebSocket service for broadcasting updates
+func (s *Server) GetWebSocketService() *websocket.Service {
+	return s.websocketService
 }
