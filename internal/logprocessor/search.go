@@ -469,6 +469,8 @@ func (s *SearchService) GetLogStatistics(ctx context.Context, startTime, endTime
 			Start: startTime,
 			End:   endTime,
 		},
+		ByLogType: make(map[string]int),
+		ByEvent:   make(map[string]int),
 	}
 
 	// Get total log entries
@@ -490,7 +492,6 @@ func (s *SearchService) GetLogStatistics(ctx context.Context, startTime, endTime
 	}
 	defer rows.Close()
 
-	stats.ByLogType = make(map[string]int)
 	for rows.Next() {
 		var logType string
 		var count int
@@ -513,7 +514,6 @@ func (s *SearchService) GetLogStatistics(ctx context.Context, startTime, endTime
 	}
 	defer rows.Close()
 
-	stats.ByEvent = make(map[string]int)
 	for rows.Next() {
 		var event string
 		var count int
